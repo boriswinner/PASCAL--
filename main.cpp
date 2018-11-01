@@ -1,7 +1,4 @@
 #include <utility>
-
-#include <utility>
-
 #include <iostream>
 #include <string>
 #include <ctype.h>
@@ -12,42 +9,48 @@
 using namespace std;
 
 enum class token_types : int {
-    TYPE_STRING,
-    TYPE_INTEGER,
+    KEYWORD,
+    IDENTIFICATOR,
+    OPERATOR,
+    NUMBER,
+    LITERAL,
+};
 
+enum class token_subtypes : int {
+    /* KEYWORDS*/
     IF,
     ELSE,
     AND,
     OR,
 
+    INTEGER,
+    STRING,
+
+    /* OPERATORS*/
     GREATER,
     GREATER_EQUAL,
     LESS,
     LESS_EQUAL,
     EQUAL,
     NOT_EQUAL,
-
-    IDENTIFICATOR,
-    NUMBER,
-    LITERAL
 };
 
-static std::map<std::string, token_types> keywords{
-        {"and",     token_types::AND},
-        {"or",      token_types::OR},
-        {"if",      token_types::IF},
-        {"else",    token_types::ELSE},
-        {"string",  token_types::TYPE_STRING},
-        {"integer", token_types::TYPE_INTEGER},
+static std::map<std::string, token_subtypes> keywords{
+        {"and",     token_subtypes::AND},
+        {"or",      token_subtypes::OR},
+        {"if",      token_subtypes::IF},
+        {"else",    token_subtypes::ELSE},
+        {"string",  token_subtypes::STRING},
+        {"integer", token_subtypes::INTEGER},
 };
 
-static std::map<std::string, token_types> operators{
-        {">",  token_types::GREATER},
-        {">=", token_types::GREATER_EQUAL},
-        {"<",  token_types::LESS},
-        {"<=", token_types::LESS_EQUAL},
-        {"=",  token_types::EQUAL},
-        {"<>", token_types::NOT_EQUAL},
+static std::map<std::string, token_subtypes> operators{
+        {">",  token_subtypes::GREATER},
+        {">=", token_subtypes::GREATER_EQUAL},
+        {"<",  token_subtypes::LESS},
+        {"<=", token_subtypes::LESS_EQUAL},
+        {"=",  token_subtypes::EQUAL},
+        {"<>", token_subtypes::NOT_EQUAL},
 };
 
 
@@ -79,21 +82,24 @@ public:
 
 class Token {
 public:
-    Token(int line, int column, token_types type, int value, string text) : line_(line), column_(column), type_(type),
-                                                                            value_(value), text_(std::move(text)) {}
+    Token(int line, int column, token_types type, token_subtypes subtype) : line_(line), column_(column), type_(type),
+                                                                            subtype_(subtype) {}
+
+    Token(int line, int column, token_types type, string text) : line_(line), column_(column), type_(type),
+                                                                 text_(std::move(text)) {}
 
     void print() {
-        cout << setw(10) << "line" << setw(10) << "column" << setw(10) << "type" << setw(12) << "value" << setw(12)
+        cout << setw(10) << "line" << setw(10) << "column" << setw(10) << "type" << setw(12) << "subtype" << setw(12)
              << "text" << endl;
-        cout << setw(10) << line_ << setw(10) << column_ << setw(10) << static_cast<int>(type_) << setw(12) << value_
-             << setw(12) << text_ << endl;
+        cout << setw(10) << line_ << setw(10) << column_ << setw(10) << static_cast<int>(type_) << setw(12)
+             << static_cast<int>(subtype_) << setw(12) << text_ << endl;
     }
 
 private:
     int line_;
     int column_;
     token_types type_;
-    int value_;
+    token_subtypes subtype_;
     string text_;
 };
 
@@ -145,7 +151,7 @@ private:
                 if (c == '<') {
                     state = 1;
                 } else if (c == '=') {
-                    return {0, 0, token_types::EQUAL, 0, "="};
+                    return {0, 0, token_types::OPERATOR, token_subtypes::EQUAL};
                 } else if (c == '>') {
                     state = 6;
                 }
@@ -153,18 +159,18 @@ private:
             case 1: {
                 int c = buffer.get_current_char();
                 if (c == '=') {
-                    return {0, 0, token_types::LESS_EQUAL, 0, "<="};
+                    return {0, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
                 } else if (c == '>') {
-                    return {0, 0, token_types::NOT_EQUAL, 0, "<>"};
+                    return {0, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
                 } else {
                     buffer.return_char(c);
-                    return {0, 0, token_types::LESS, 0, "<"};
+                    return {0, 0, token_types::OPERATOR, token_subtypes::LESS};
                 }
             }
             case 6: {
                 int c = getchar();
                 if (c == '=') {
-                    return {0, 0, token_types::GREATER_EQUAL, 0, ">="};
+                    return {0, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
                 }
             }
         }
@@ -178,9 +184,9 @@ private:
         }
         buffer.return_char(c);
         if (keywords.find(s) == keywords.end()) {
-            return {0, 0, token_types::IDENTIFICATOR, 0, s};
+            return {0, 0, token_types::IDENTIFICATOR, s};
         } else {
-            return {0, 0, keywords[s], 0, s};
+            return {0, 0, token_types::KEYWORD, keywords[s]};
         }
     }
 
