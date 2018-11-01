@@ -82,8 +82,9 @@ public:
 
 class Token {
 public:
-    Token(int line, int column, token_types type, token_subtypes subtype) : line_(line), column_(column), type_(type),
-                                                                            subtype_(subtype) {
+    Token(int line, int column, token_types type, token_subtypes subtype) :
+        line_(line), column_(column), type_(type), subtype_(subtype)
+    {
         text_ = "";
     }
 
@@ -136,6 +137,8 @@ public:
                         state = 3;
                     } else if (is_digit(c)){
                         state = 4;
+                    } else if (c == '\n'){
+                        line_++;
                     }
                     break;
                 }
@@ -177,7 +180,7 @@ private:
                     if (c == '<') {
                         state = 1;
                     } else if (c == '=') {
-                        return {0, 0, token_types::OPERATOR, token_subtypes::EQUAL};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::EQUAL};
                     } else if (c == '>') {
                         state = 6;
                     }
@@ -187,13 +190,13 @@ private:
                     int c = buffer.look_current_char();
                     if (c == '=') {
                         c = buffer.get_current_char();
-                        return {0, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
                     } else if (c == '>') {
                         c = buffer.get_current_char();
-                        return {0, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
                     } else {
                         //buffer.return_char(c);
-                        return {0, 0, token_types::OPERATOR, token_subtypes::LESS};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::LESS};
                     }
                     break;
                 }
@@ -201,10 +204,10 @@ private:
                     int c = buffer.look_current_char();
                     if (c == '=') {
                         c = buffer.get_current_char();
-                        return {0, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
                     } else{
                         //buffer.return_char(c);
-                        return {0, 0, token_types::OPERATOR, token_subtypes::GREATER};
+                        return {line_, 0, token_types::OPERATOR, token_subtypes::GREATER};
                     }
                     break;
                 }
@@ -221,9 +224,9 @@ private:
             c = buffer.look_current_char();
         }
         if (keywords.find(s) == keywords.end()) {
-            return {0, 0, token_types::IDENTIFICATOR, s};
+            return {line_, 0, token_types::IDENTIFICATOR, s};
         } else {
-            return {0, 0, token_types::KEYWORD, keywords[s]};
+            return {line_, 0, token_types::KEYWORD, keywords[s]};
         }
     }
 
@@ -235,7 +238,7 @@ private:
             s.push_back(char(c));
             c = buffer.look_current_char();
         }
-        return {0,0, token_types ::NUMBER, s};
+        return {line_,0, token_types ::NUMBER, s};
     }
 
 };
