@@ -109,17 +109,15 @@ public:
 
     Token get_next() {
         int state = 0;
-        int c = 0;
+        int c = buffer.get_current_char();
+        if ((c == ' ') || (c == '\n')) {
+            state = 1;
+        } else if (is_letter(c)) {
+            state = 2;
+        } else if (c == '>' || c == '<' || c == '='){
+            state = 3;
+        }
         switch (state) {
-            case 0: {
-                c = buffer.get_current_char();
-                if ((c == ' ') || (c == '\n')) {
-                    state = 1;
-                }
-                if (is_letter(c)) {
-                    state = 2;
-                }
-            }
             case 1: {
 
             }
@@ -127,6 +125,12 @@ public:
                 if (is_letter(buffer.look_current_char()) || is_digit(buffer.look_current_char())) {
                     return read_identificator(c);
                 }
+                break;
+            }
+            case 3: {
+                buffer.return_char(c);
+                return read_relop();
+                break;
             }
         }
     }
@@ -145,32 +149,41 @@ private:
 
     Token read_relop() {
         int state = 0;
-        switch (state) {
-            case 0: {
-                int c = buffer.get_current_char();
-                if (c == '<') {
-                    state = 1;
-                } else if (c == '=') {
-                    return {0, 0, token_types::OPERATOR, token_subtypes::EQUAL};
-                } else if (c == '>') {
-                    state = 6;
+        char c;
+        while (true){
+            switch (state) {
+                case 0: {
+                    int c = buffer.get_current_char();
+                    if (c == '<') {
+                        state = 1;
+                    } else if (c == '=') {
+                        return {0, 0, token_types::OPERATOR, token_subtypes::EQUAL};
+                    } else if (c == '>') {
+                        state = 6;
+                    }
+                    break;
                 }
-            }
-            case 1: {
-                int c = buffer.get_current_char();
-                if (c == '=') {
-                    return {0, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
-                } else if (c == '>') {
-                    return {0, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
-                } else {
-                    buffer.return_char(c);
-                    return {0, 0, token_types::OPERATOR, token_subtypes::LESS};
+                case 1: {
+                    int c = buffer.get_current_char();
+                    if (c == '=') {
+                        return {0, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
+                    } else if (c == '>') {
+                        return {0, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
+                    } else {
+                        buffer.return_char(c);
+                        return {0, 0, token_types::OPERATOR, token_subtypes::LESS};
+                    }
+                    break;
                 }
-            }
-            case 6: {
-                int c = getchar();
-                if (c == '=') {
-                    return {0, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
+                case 6: {
+                    int c = buffer.get_current_char();
+                    if (c == '=') {
+                        return {0, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
+                    } else{
+                        buffer.return_char(c);
+                        return {0, 0, token_types::OPERATOR, token_subtypes::GREATER};
+                    }
+                    break;
                 }
             }
         }
