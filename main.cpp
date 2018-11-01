@@ -51,16 +51,16 @@ class Buffer{
 private:
     string filename_;
     ifstream input_file;
-    char c_;
+    int c_;
 public:
-    Buffer(const string &filename): filename_(filename){
+    explicit Buffer(const string &filename): filename_(filename){
         input_file = ifstream(filename);
-        input_file.get(c_);
+        c_ = input_file.get();
     }
 
-    char get_current_char(){
-        char t = c_;
-        input_file.get(c_);
+    int get_current_char(){
+        int t = c_;
+        c_ = input_file.get();
         return t;
     }
 
@@ -112,7 +112,7 @@ public:
 
             }
             case 2:{
-                if (is_letter(buffer.look_current_char())){
+                if (is_letter(buffer.look_current_char()) || is_digit(buffer.look_current_char())){
                     return read_identificator(c);
                 }
             }
@@ -163,11 +163,14 @@ private:
         }
     }
 
-    Token read_identificator(char c){
+    Token read_identificator(int c){
         string s;
         while(is_letter(c) || is_digit(c)){
-            s.push_back(c);
+            s.push_back(char(c));
             c = buffer.get_current_char();
+//            if (c == std::char_traits<int>::eof()){
+//                break;
+//            }
         }
         buffer.return_char(c);
         if ( keywords.find(s) == keywords.end() ) {
