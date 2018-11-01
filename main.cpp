@@ -83,10 +83,14 @@ public:
 class Token {
 public:
     Token(int line, int column, token_types type, token_subtypes subtype) : line_(line), column_(column), type_(type),
-                                                                            subtype_(subtype) {}
+                                                                            subtype_(subtype) {
+        text_ = "";
+    }
 
     Token(int line, int column, token_types type, string text) : line_(line), column_(column), type_(type),
-                                                                 text_(std::move(text)) {}
+                                                                 text_(std::move(text)) {
+        subtype_ = static_cast<token_subtypes>(-1);
+    }
 
     Token(bool is_null): is_null_(true){}
 
@@ -130,6 +134,8 @@ public:
                         state = 2;
                     } else if (c == '>' || c == '<' || c == '='){
                         state = 3;
+                    } else if (is_digit(c)){
+                        state = 4;
                     }
                     break;
                 }
@@ -139,6 +145,10 @@ public:
                 }
                 case 3: {
                     return read_relop();
+                    break;
+                }
+                case 4: {
+                    return read_number();
                     break;
                 }
             }
@@ -210,12 +220,22 @@ private:
             s.push_back(char(c));
             c = buffer.look_current_char();
         }
-        //buffer.return_char(c);
         if (keywords.find(s) == keywords.end()) {
             return {0, 0, token_types::IDENTIFICATOR, s};
         } else {
             return {0, 0, token_types::KEYWORD, keywords[s]};
         }
+    }
+
+    Token read_number(){
+        string s;
+        int c = buffer.look_current_char();
+        while (is_digit(c)) {
+            c = buffer.get_current_char();
+            s.push_back(char(c));
+            c = buffer.look_current_char();
+        }
+        return {0,0, token_types ::NUMBER, s};
     }
 
 };
