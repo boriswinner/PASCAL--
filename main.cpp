@@ -5,10 +5,12 @@
 #include <iomanip>
 #include <map>
 #include <fstream>
+#include <set>
 
 using namespace std;
 
 enum class token_types : int {
+    ENDOFFILE,
     KEYWORD,
     IDENTIFICATOR,
     OPERATOR,
@@ -17,6 +19,7 @@ enum class token_types : int {
 };
 
 enum class token_subtypes : int {
+    UNKNOWN,
     /* KEYWORDS*/
     IF,
     ELSE,
@@ -24,6 +27,7 @@ enum class token_subtypes : int {
     OR,
 
     INTEGER,
+    FLOAT,
     STRING,
 
     /* OPERATORS*/
@@ -65,35 +69,37 @@ public:
         c_ = input_file.get();
     }
 
-    int get_current_char() {
+    int next_char() {
         int t = c_;
         c_ = input_file.get();
         return t;
     }
 
-    int look_current_char() {
+    int peak() {
         return c_;
     }
 
-    void return_char(char c) {
-        c_ = c;
-    }
+//    void return_char(char c) {
+//        c_ = c;
+//    }
 };
 
 class Token {
 public:
     Token(int line, int column, token_types type, token_subtypes subtype) :
-        line_(line), column_(column), type_(type), subtype_(subtype)
-    {
+        line_(line), column_(column), type_(type), subtype_(subtype) {
         text_ = "";
     }
 
+    Token(): type_(token_types::ENDOFFILE), subtype_(token_subtypes::UNKNOWN) {}
+
     Token(int line, int column, token_types type, string text) : line_(line), column_(column), type_(type),
                                                                  text_(std::move(text)) {
-        subtype_ = static_cast<token_subtypes>(-1);
+        subtype_ = token_subtypes ::UNKNOWN;
     }
 
-    Token(bool is_null): is_null_(true){}
+    Token(int line, int column, token_types type, token_subtypes subtype, string text) : line_(line), column_(column), type_(type), subtype_(subtype),
+                                                                 text_(std::move(text)) {}
 
     void print() {
         cout << setw(10) << "line" << setw(10) << "column" << setw(10) << "type" << setw(12) << "subtype" << setw(12)
@@ -102,143 +108,148 @@ public:
              << static_cast<int>(subtype_) << setw(12) << text_ << endl;
     }
 
-    bool isNull(){
-        return is_null_;
-    }
-
-private:
     int line_;
     int column_;
     token_types type_;
     token_subtypes subtype_;
     string text_;
-    bool is_null_ = false;
 };
 
 class Lexer {
 public:
-    Lexer(const string &filename) : buffer(filename) {}
+    Lexer(const string &filename) : buffer_(filename), line_(0), column_(0) {}
 
     Token get_next() {
-        int state = 0;
-        int c = 0;
         while (true){
-            switch (state) {
-                case 0: {
-                    c = buffer.look_current_char();
-                    if (c == char_traits<int>::eof()){
-                        return Token(true);
-                    }else if ((c == ' ') || (c == '\n')) {
-                        c = buffer.get_current_char();
-                        state = 0;
-                    } else if (is_letter(c)) {
-                        state = 2;
-                    } else if (c == '>' || c == '<' || c == '='){
-                        state = 3;
-                    } else if (is_digit(c)){
-                        state = 4;
-                    } else if (c == '\n'){
-                        line_++;
-                    }
-                    break;
-                }
-                case 2: {
-                    return read_identificator();
-                    break;
-                }
-                case 3: {
-                    return read_relop();
-                    break;
-                }
-                case 4: {
-                    return read_number();
-                    break;
-                }
+            int c = buffer_.peak();
+            column_++;
+            if (c == '\n'){
+                line_++;
+                column_ = 0;
+                c = buffer_.next_char();
+                continue;
+            } else if (c == ' '){
+                c = buffer_.next_char();
+                continue;
+            } else if (isalpha(c)){
+                return read_identificator();
+            } else if ((c == '+') || (c == '-') || isdigit(c)){
+                return read_number();
+            } else if (c == '>' || c == '<' || c == '='){
+                return read_relop();
+            } else if (c == char_traits<int>::eof()){
+                return {};
             }
         }
     }
 
 private:
-    int line_;
-    Buffer buffer;
+    int line_, column_;
+    Buffer buffer_;
 
-    bool is_letter(int c) {
-        return isalpha(c);
-    }
-
-    bool is_digit(int c) {
-        return isdigit(c);
-    }
+    set<int> operator_symbols{'>','<','=','!'};
+    bool is_operator_symbol(int c){
+        return static_cast<bool>(operator_symbols.count(c));
+    };
 
     Token read_relop() {
-        int state = 0;
-        char c;
-        while (true){
-            switch (state) {
-                case 0: {
-                    int c = buffer.get_current_char();
-                    if (c == '<') {
-                        state = 1;
-                    } else if (c == '=') {
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::EQUAL};
-                    } else if (c == '>') {
-                        state = 6;
-                    }
-                    break;
-                }
-                case 1: {
-                    int c = buffer.look_current_char();
-                    if (c == '=') {
-                        c = buffer.get_current_char();
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::LESS_EQUAL};
-                    } else if (c == '>') {
-                        c = buffer.get_current_char();
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::NOT_EQUAL};
-                    } else {
-                        //buffer.return_char(c);
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::LESS};
-                    }
-                    break;
-                }
-                case 6: {
-                    int c = buffer.look_current_char();
-                    if (c == '=') {
-                        c = buffer.get_current_char();
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::GREATER_EQUAL};
-                    } else{
-                        //buffer.return_char(c);
-                        return {line_, 0, token_types::OPERATOR, token_subtypes::GREATER};
-                    }
-                    break;
-                }
-            }
+        string s;
+        int c = buffer_.peak();
+        while (is_operator_symbol(c)){
+            c = do_buffer_step(s, c);
+        }
+        if (operators.find(s) != operators.end()){
+            return {line_, 0, token_types::OPERATOR, s};
+        } else{
+            //throw exception
         }
     }
 
     Token read_identificator() {
         string s;
-        int c = buffer.look_current_char();
-        while (is_letter(c) || is_digit(c)) {
-            c = buffer.get_current_char();
-            s.push_back(char(c));
-            c = buffer.look_current_char();
+        int c = buffer_.peak();
+        while (isalpha(c) || isdigit(c)) {
+            c = do_buffer_step(s, c);
         }
         if (keywords.find(s) == keywords.end()) {
-            return {line_, 0, token_types::IDENTIFICATOR, s};
+            return {line_, column_, token_types::IDENTIFICATOR, s};
         } else {
-            return {line_, 0, token_types::KEYWORD, keywords[s]};
+            return {line_, column_, token_types::KEYWORD, keywords[s]};
         }
     }
 
     Token read_number(){
         string s;
-        int c = buffer.look_current_char();
-        while (is_digit(c)) {
-            c = buffer.get_current_char();
-            s.push_back(char(c));
-            c = buffer.look_current_char();
+        int c = buffer_.peak();
+        int state = 0;
+        enum {START, INT, FLOAT, BIN, HEX, SCALEFACTOR};
+        while(true){
+            switch (state){
+                case START:{
+                    if ((c == '+') || (c == '-') || isdigit(c)){
+                        state = INT;
+                    } else if (c == '$'){
+                        state = HEX;
+                    }
+                    break;
+                }
+
+                case INT:{
+                    if ((c == '+') || (c == '-')){
+                        c = do_buffer_step(s, c);
+                    }
+                    while (isdigit(c)){
+                        c = do_buffer_step(s, c);
+                    }
+                    if (c == '.' || c == 'E' || c == 'e'){
+                        state = FLOAT;
+                    } else{
+                        return {line_,column_, token_types ::NUMBER, token_subtypes:: INTEGER, s};
+                    }
+                    break;
+                }
+
+                case FLOAT:{
+                    c = buffer_.peak();
+                    if (c == '.'){
+                        c = do_buffer_step(s, c);
+                    }
+                    while(isdigit(c)){
+                        c = do_buffer_step(s, c);
+                    }
+                    if (c == 'E' || c == 'e'){
+                        state = SCALEFACTOR;
+                        c = do_buffer_step(s, c);
+                        while (isdigit(c)){
+                            c = do_buffer_step(s, c);
+                        }
+                        return {line_,column_,token_types ::NUMBER,token_subtypes::FLOAT, s};
+                    } else {
+                        return {line_,column_, token_types ::NUMBER, token_subtypes::FLOAT, s};
+                    }
+                }
+
+
+                case HEX:{
+
+                }
+            }
         }
-        return {line_,0, token_types ::NUMBER, s};
+    }
+
+    int do_buffer_step(string &s, int c) {
+        c = buffer_.next_char();
+        s.push_back(char(c));
+        c = buffer_.peak();
+        return c;
+    }
+
+    Token read_string(){
+        string s;
+        int c = buffer_.peak();
+//        while(true){
+//            if (c == '#')
+//        }
     }
 
 };
@@ -247,7 +258,7 @@ int main() {
     Lexer lexer("input.txt");
     while (true){
         Token t = lexer.get_next();
-        if (t.isNull()){
+        if (t.type_ == token_types::ENDOFFILE){
             break;
         }
         t.print();
