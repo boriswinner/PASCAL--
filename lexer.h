@@ -7,7 +7,8 @@
 #include <map>
 #include <fstream>
 #include <set>
-
+#include<algorithm>
+#include "string.h"
 enum class token_types : int {
     ENDOFFILE,
     KEYWORD,
@@ -38,7 +39,13 @@ enum class token_subtypes : int {
     NOT_EQUAL,
 };
 
-static std::map<std::string, token_subtypes> keywords{
+struct case_insensitive_string_cmp {
+    bool operator() (const std::string& lhs, const std::string& rhs) const {
+        return stricmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+};
+
+static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywords{
         {"and",     token_subtypes::AND},
         {"or",      token_subtypes::OR},
         {"if",      token_subtypes::IF},
@@ -47,7 +54,7 @@ static std::map<std::string, token_subtypes> keywords{
         {"integer", token_subtypes::INTEGER},
 };
 
-static std::map<std::string, token_subtypes> operators{
+static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
         {">",  token_subtypes::GREATER},
         {">=", token_subtypes::GREATER_EQUAL},
         {"<",  token_subtypes::LESS},
@@ -175,7 +182,7 @@ private:
         if (keywords.find(s) == keywords.end()) {
             return {line_, column_, token_types::IDENTIFICATOR, s};
         } else {
-            return {line_, column_, token_types::KEYWORD, keywords[s]};
+            return {line_, column_, token_types::KEYWORD, keywords[s], s};
         }
     }
 
@@ -284,6 +291,9 @@ private:
                 c = buffer_.peak();
                 if ((c != '\'') && (c != '#')){
                     return {line_, column_, token_types::LITERAL, s};
+                } else if (c == '\''){
+                    c = buffer_.next_char();
+                    c = buffer_.peak();
                 }
             } else{
                 c = do_buffer_step(s, c);
