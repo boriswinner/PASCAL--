@@ -133,7 +133,7 @@ public:
                 continue;
             } else if (isalpha(c)){
                 return read_identificator();
-            } else if ((c == '+') || (c == '-') || isdigit(c)){
+            } else if ((c == '+') || (c == '-') || isdigit(c) || (c == '%') || (c == '$')){
                 return read_number();
             } else if (c == '>' || c == '<' || c == '='){
                 return read_relop();
@@ -190,6 +190,10 @@ private:
                         state = INT;
                     } else if (c == '$'){
                         state = HEX;
+                        c = do_buffer_step(s, c);
+                    } else if (c == '%'){
+                        c = do_buffer_step(s, c);
+                        state = BIN;
                     }
                     break;
                 }
@@ -231,7 +235,17 @@ private:
 
 
                 case HEX:{
+                    while (isxdigit(c)){
+                        c = do_buffer_step(s ,c);
+                    }
+                    return {line_, column_, token_types ::NUMBER, token_subtypes ::INTEGER, s};
+                }
 
+                case BIN:{
+                    while ((c == '0' || c == '1')){
+                        c = do_buffer_step(s ,c);
+                    }
+                    return {line_, column_, token_types ::NUMBER, token_subtypes ::INTEGER, s};
                 }
             }
         }
