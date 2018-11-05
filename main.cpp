@@ -139,6 +139,8 @@ public:
                 return read_relop();
             } else if (c == char_traits<int>::eof()){
                 return {};
+            } else if ((c == '\'') || (c == '#')){
+                return read_string();
             }
         }
     }
@@ -261,9 +263,33 @@ private:
     Token read_string(){
         string s;
         int c = buffer_.peak();
-//        while(true){
-//            if (c == '#')
-//        }
+        if (c == '\''){
+            c = buffer_.next_char();
+            c = buffer_.peak();
+        } else{
+            //throw exception
+        }
+        while(true){
+            if (c == '\''){
+                c = buffer_.next_char();
+                c = buffer_.peak();
+                if (c == '\''){
+                    c = do_buffer_step(s, c);
+                } else{
+                    return {line_, column_, token_types::LITERAL, s};
+                }
+            } else if (c == '#'){
+                c = buffer_.next_char();
+                Token t = read_number();
+                s.push_back(static_cast<char>(stoi(t.text_)));
+                c = buffer_.peak();
+                if ((c != '\'') && (c != '#')){
+                    return {line_, column_, token_types::LITERAL, s};
+                }
+            } else{
+                c = do_buffer_step(s, c);
+            }
+        }
     }
 
 };
