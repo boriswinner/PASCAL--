@@ -7,61 +7,8 @@
 #include <map>
 #include <fstream>
 #include <set>
-#include<algorithm>
-#include "string.h"
-enum class token_types : int {
-    ENDOFFILE,
-    KEYWORD,
-    IDENTIFICATOR,
-    OPERATOR,
-    NUMBER,
-    LITERAL,
-};
-
-enum class token_subtypes : int {
-    UNKNOWN,
-    /* KEYWORDS*/
-            IF,
-    ELSE,
-    AND,
-    OR,
-
-    INTEGER,
-    FLOAT,
-    STRING,
-
-    /* OPERATORS*/
-            GREATER,
-    GREATER_EQUAL,
-    LESS,
-    LESS_EQUAL,
-    EQUAL,
-    NOT_EQUAL,
-};
-
-struct case_insensitive_string_cmp {
-    bool operator() (const std::string& lhs, const std::string& rhs) const {
-        return stricmp(lhs.c_str(), rhs.c_str()) < 0;
-    }
-};
-
-static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywords{
-        {"and",     token_subtypes::AND},
-        {"or",      token_subtypes::OR},
-        {"if",      token_subtypes::IF},
-        {"else",    token_subtypes::ELSE},
-        {"string",  token_subtypes::STRING},
-        {"integer", token_subtypes::INTEGER},
-};
-
-static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
-        {">",  token_subtypes::GREATER},
-        {">=", token_subtypes::GREATER_EQUAL},
-        {"<",  token_subtypes::LESS},
-        {"<=", token_subtypes::LESS_EQUAL},
-        {"=",  token_subtypes::EQUAL},
-        {"<>", token_subtypes::NOT_EQUAL},
-};
+#include <algorithm>
+#include "token_types.h"
 
 
 class Buffer {
@@ -97,11 +44,11 @@ public:
         text_ = "";
     }
 
-    Token(): type_(token_types::ENDOFFILE), subtype_(token_subtypes::UNKNOWN) {}
+    Token(): type_(ENDOFFILE), subtype_(UNKNOWN) {}
 
     Token(int line, int column, token_types type, std::string text) : line_(line), column_(column), type_(type),
                                                                  text_(std::move(text)) {
-        subtype_ = token_subtypes ::UNKNOWN;
+        subtype_ = UNKNOWN;
     }
 
     Token(int line, int column, token_types type, token_subtypes subtype, std::string text) : line_(line), column_(column), type_(type), subtype_(subtype),
@@ -216,7 +163,7 @@ private:
                     if (c == '.' || c == 'E' || c == 'e'){
                         state = FLOAT;
                     } else{
-                        return {line_,column_, token_types ::NUMBER, token_subtypes:: INTEGER, s};
+                        return {line_,column_, token_types ::NUMBER, token_subtypes_keywords::INTEGER, s};
                     }
                     break;
                 }
@@ -235,9 +182,9 @@ private:
                         while (isdigit(c)){
                             c = do_buffer_step(s, c);
                         }
-                        return {line_,column_,token_types ::NUMBER,token_subtypes::FLOAT, s};
+                        return {line_,column_,token_types ::NUMBER,token_subtypes_keywords::FLOAT, s};
                     } else {
-                        return {line_,column_, token_types ::NUMBER, token_subtypes::FLOAT, s};
+                        return {line_,column_, token_types ::NUMBER, token_subtypes_keywords::FLOAT, s};
                     }
                 }
 
@@ -246,14 +193,14 @@ private:
                     while (isxdigit(c)){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes ::INTEGER, s};
+                    return {line_, column_, token_types ::NUMBER, token_subtypes_keywords ::INTEGER, s};
                 }
 
                 case BIN:{
                     while ((c == '0' || c == '1')){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes ::INTEGER, s};
+                    return {line_, column_, token_types ::NUMBER, token_subtypes_keywords ::INTEGER, s};
                 }
             }
         }
