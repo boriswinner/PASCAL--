@@ -44,21 +44,21 @@ public:
         text_ = "";
     }
 
-    Token(): type_(ENDOFFILE), subtype_(UNKNOWN) {}
+    Token(): type_(ENDOFFILE), subtype_(token_subtypes::UNKNOWN) {}
 
     Token(int line, int column, token_types type, std::string text) : line_(line), column_(column), type_(type),
                                                                  text_(std::move(text)) {
-        subtype_ = UNKNOWN;
+        subtype_ = token_subtypes::UNKNOWN;
     }
 
     Token(int line, int column, token_types type, token_subtypes subtype, std::string text) : line_(line), column_(column), type_(type), subtype_(subtype),
                                                                                          text_(std::move(text)) {}
 
     void print() {
-        std::cout << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(10) << "type" << std::setw(12) << "subtype" << std::setw(12)
+        std::cout << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(10) << "type" << std::setw(12) << "subtype" << std::setw(15)
              << "text" << std::endl;
-        std::cout << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(10) << static_cast<int>(type_) << std::setw(12)
-             << static_cast<int>(subtype_) << std::setw(12) << text_ << std::endl;
+        std::cout << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(10) << token_types_names[type_] << std::setw(12)
+             << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl << std::endl;
     }
 
     int line_;
@@ -163,7 +163,7 @@ private:
                     if (c == '.' || c == 'E' || c == 'e'){
                         state = FLOAT;
                     } else{
-                        return {line_,column_, token_types ::NUMBER, token_subtypes_keywords::INTEGER, s};
+                        return {line_,column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
                     }
                     break;
                 }
@@ -182,9 +182,9 @@ private:
                         while (isdigit(c)){
                             c = do_buffer_step(s, c);
                         }
-                        return {line_,column_,token_types ::NUMBER,token_subtypes_keywords::FLOAT, s};
+                        return {line_,column_,token_types ::NUMBER,token_subtypes::FLOAT, s};
                     } else {
-                        return {line_,column_, token_types ::NUMBER, token_subtypes_keywords::FLOAT, s};
+                        return {line_,column_, token_types ::NUMBER, token_subtypes::FLOAT, s};
                     }
                 }
 
@@ -193,14 +193,14 @@ private:
                     while (isxdigit(c)){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes_keywords ::INTEGER, s};
+                    return {line_, column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
                 }
 
                 case BIN:{
                     while ((c == '0' || c == '1')){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes_keywords ::INTEGER, s};
+                    return {line_, column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
                 }
             }
         }

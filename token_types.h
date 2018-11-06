@@ -10,7 +10,6 @@ struct case_insensitive_string_cmp {
 
 #define TOKENTYPES \
     X(ENDOFFILE) \
-    X(UNKNOWN) \
     X(KEYWORD) \
     X(IDENTIFICATOR) \
     X(OPERATOR) \
@@ -74,28 +73,40 @@ enum token_types: int {
 #undef X
 };
 
-enum token_subtypes_keywords: int{
+char const* token_types_names[]={
+    #define X(name) #name,
+        TOKENTYPES
+    #undef X
+};
+
+enum token_subtypes: int{
+    UNKNOWN,
 #define X(name) name,
     KEYWORDS
 #undef X
-};
-
-static std::map<std::string, token_subtypes_keywords, case_insensitive_string_cmp> keywords{
-#define X(name) {#name, name},
-        KEYWORDS
-#undef X
-};
-
-enum token_subtypes_operators: int{
 #define X(name, str) name,
     OPERATORS
 #undef X
 };
 
-static std::map<std::string, token_subtypes_operators, case_insensitive_string_cmp> operators{
-#define X(name, str) {str, name},
+char const* token_subtypes_names[]={
+        "UNKNOWN",
+#define X(name) #name,
+        KEYWORDS
+#undef X
+#define X(name, str) #name,
         OPERATORS
 #undef X
 };
 
-typedef int token_subtypes;
+static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywords{
+#define X(name) {#name, name},
+        KEYWORDS
+#undef X
+};
+
+static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
+#define X(name, str) {str, name},
+        OPERATORS
+#undef X
+};
