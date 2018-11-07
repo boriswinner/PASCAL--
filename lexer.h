@@ -85,18 +85,32 @@ public:
     std::string text_;
 };
 
-class IncorrectOperator : public std::exception
-{
+class LexerException : public std::exception {
+protected:
     std::string m_msg;
 public:
 
-    IncorrectOperator(int line, int column) {
-        m_msg = ("LexerError: Incorrect operator at line "+std::to_string(line)+" column "+std::to_string(column));
+    LexerException(int line, int column) {
+        m_msg = ("LexerError at line "+std::to_string(line)+" column "+std::to_string(column));
     }
 
     virtual const char* what() const throw()
     {
         return m_msg.c_str();
+    }
+};
+
+class IncorrectOperatorException : public LexerException {
+public:
+    IncorrectOperatorException(int line, int column) : LexerException(line, column) {
+        m_msg = ("LexerError: Incorrect operator at line "+std::to_string(line)+" column "+std::to_string(column));
+    }
+};
+
+class IncorrectCharacterException : public LexerException {
+public:
+    IncorrectCharacterException(int line, int column) : LexerException(line, column) {
+        m_msg = ("LexerError: Incorrect character at line "+std::to_string(line)+" column "+std::to_string(column));
     }
 };
 
@@ -121,6 +135,9 @@ public:
                 return {};
             } else if ((c == '\'') || (c == '#')){
                 return read_string();
+            } else{
+                c = buffer_.next_char();
+                throw IncorrectCharacterException(buffer_.line(),buffer_.column());
             }
         }
     }
@@ -143,7 +160,7 @@ private:
             return {buffer_.line(), buffer_.column(), token_types::OPERATOR, operators[s], s};
         } else{
             //throw exception
-            throw IncorrectOperator(buffer_.line(),buffer_.column());
+            throw IncorrectOperatorException(buffer_.line(), buffer_.column());
         }
     }
 

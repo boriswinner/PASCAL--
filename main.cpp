@@ -14,8 +14,10 @@ int main() {
                 break;
             }
             out << t.print();
-        } catch (IncorrectOperator& e){
+        } catch (LexerException& e){
             std::cout << e.what() << std::endl;
+        } catch(std::exception& e){
+            std::cout << "Unknown exception" << std::endl;;
         }
     }
 

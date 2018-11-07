@@ -2,7 +2,7 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 8
+#define NUMBER_OF_TESTS 9
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
@@ -18,8 +18,10 @@ int main(){
                     break;
                 }
                 lexer_out << t.print();
-            } catch (IncorrectOperator& e){
+            } catch (LexerException & e){
                 lexer_out << e.what() << std::endl;
+            } catch(std::exception& e){
+                std::cout << "Unknown exception" << std::endl;;
             }
         }
 
