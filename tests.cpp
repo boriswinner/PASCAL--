@@ -1,113 +1,46 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch.hpp"
+#pragma once
+
+#include <fstream>
+#include <sstream>
+#include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#include "vector"
+#define NUMBER_OF_TESTS 5
 
-TEST_CASE ("Numbers"){
-    std::string filename = "test01.txt";
-    std::ifstream file(filename);
-    std::vector<std::string> answers;
-    std::string s;
-    while (getline(file, s)){
-        answers.push_back(s);
-    }
-    Lexer lexer(filename);
-    int i = 0;
-    while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
-        }
-        REQUIRE(t.text_ == answers[i]);
-        REQUIRE(t.type_ == token_types::NUMBER);
-        ++i;
-    }
-}
+int main(){
+    for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
+        std::string filename("../tests/test"+std::to_string(i));
 
-TEST_CASE("Strings"){
-    std::string filename_in = "test02.txt";
-    std::string filename_out = "test02_out.txt";
-    std::ifstream file(filename_out);
-    std::vector<std::string> answers;
-    std::string s;
-    while (getline(file, s)){
-        answers.push_back(s);
-    }
-    Lexer lexer(filename_in);
-    int i = 0;
-    while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
-        }
-        REQUIRE(t.text_ == answers[i]);
-        REQUIRE(t.type_ == token_types::LITERAL);
-        ++i;
-    }
-}
+        Lexer lexer(filename+".in");
 
-TEST_CASE("Identificators"){
-    std::string filename_in = "test03.txt";
-    std::string filename_out = "test03.txt";
-    std::ifstream file(filename_out);
-    std::vector<std::string> answers;
-    std::string s;
-    while (getline(file, s)){
-        answers.push_back(s);
-    }
-    Lexer lexer(filename_in);
-    int i = 0;
-    while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
+        std::stringstream lexer_out;
+        while (true){
+            Token t = lexer.get_next();
+            if (t.type_ == token_types::ENDOFFILE){
+                break;
+            }
+            lexer_out << t.print();
         }
-        REQUIRE(t.text_ == answers[i]);
-        REQUIRE(t.type_ == token_types::IDENTIFICATOR);
-        ++i;
-    }
-}
 
-TEST_CASE("Keywords"){
-    std::string filename_in = "test04.txt";
-    std::string filename_out = "test04.txt";
-    std::ifstream file(filename_out);
-    std::vector<std::string> answers;
-    std::string s;
-    while (getline(file, s)){
-        answers.push_back(s);
-    }
-    Lexer lexer(filename_in);
-    int i = 0;
-    while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
+        std::ifstream out(filename+".out");
+        std::stringstream ssout;
+        ssout << out.rdbuf();
+        dtl::Diff <char, std::string> d(lexer_out.str(), ssout.str());
+        d.compose();
+        if (d.getEditDistance() == 0){
+            std::cout << "TEST "+std::to_string(i) <<" PASSED" << std::endl;
+        } else{
+            std::cout << "TEST "+std::to_string(i) <<" FAILED" << std::endl;
         }
-        REQUIRE(t.text_ == answers[i]);
-        REQUIRE(t.type_ == token_types::KEYWORD);
-        ++i;
-    }
-}
+// editDistance
+//        std::cout << "editDistance:" << d.getEditDistance() << std::endl;
 
-TEST_CASE("Relops"){
-    std::string filename_in = "test05.txt";
-    std::string filename_out = "test05.txt";
-    std::ifstream file(filename_out);
-    std::vector<std::string> answers;
-    std::string s;
-    while (getline(file, s)){
-        answers.push_back(s);
-    }
-    Lexer lexer(filename_in);
-    int i = 0;
-    while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
-        }
-        REQUIRE(t.text_ == answers[i]);
-        REQUIRE(t.type_ == token_types::OPERATOR);
-        ++i;
+        // Longest Common Subsequence
+//        std::vector< char > lcs_v = d.getLcsVec();
+//        std::string lcs_s(lcs_v.begin(), lcs_v.end());
+//        std::cout << "LCS:" << std::endl << lcs_s << std::endl;
+
+        // Shortest Edit Script
+//        std::cout << "SES" << std::endl;
+//        d.printSES();
     }
 }

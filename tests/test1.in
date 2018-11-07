@@ -1,0 +1,5 @@
+var
+  i: integer;
+begin
+  i := 25 + 15.0 - %0101 + $A14;
+end;
