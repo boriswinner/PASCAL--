@@ -49,8 +49,6 @@ struct case_insensitive_string_cmp {
     X(Minus, "-") \
     X(Multiply, "*") \
     X(Divide, "/") \
-
-#define SEPARATORS \
     X(OpenParenthesis, "(") \
     X(CloseParenthesis, ")") \
     X(OpenSquareBracket, "[") \
@@ -78,9 +76,6 @@ enum token_subtypes: int{
 #define X(name, str) name,
     OPERATORS
 #undef X
-#define X(name, str) name,
-    SEPARATORS
-#undef X
 };
 
 char const* token_subtypes_names[]={
@@ -90,9 +85,6 @@ char const* token_subtypes_names[]={
 #undef X
 #define X(name, str) #name,
         OPERATORS
-#undef X
-#define X(name, str) #name,
-        SEPARATORS
 #undef X
 };
 
@@ -105,11 +97,5 @@ static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywor
 static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
 #define X(name, str) {str, name},
         OPERATORS
-#undef X
-};
-
-static std::map<std::string, token_subtypes, case_insensitive_string_cmp> separators{
-#define X(name, str) {str, name},
-        SEPARATORS
 #undef X
 };

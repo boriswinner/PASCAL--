@@ -56,9 +56,9 @@ public:
 
     std::string print() {
         std::stringstream buffer;
-        buffer << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(13) << "type" << std::setw(12) << "subtype" << std::setw(15)
+        buffer << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(14) << "type" << std::setw(12) << "subtype" << std::setw(15)
              << "text" << std::endl;
-        buffer << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(13) << token_types_names[type_] << std::setw(12)
+        buffer << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(14) << token_types_names[type_] << std::setw(12)
              << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl << std::endl;
         return buffer.str();
     }
@@ -92,8 +92,6 @@ public:
                 return read_number();
             } else if (is_operator_symbol(c)){
                 return read_relop();
-            } else if (is_separator_symbol(c)){
-                return read_separator();
             } else if (c == std::char_traits<int>::eof()){
                 return {};
             } else if ((c == '\'') || (c == '#')){
@@ -106,14 +104,9 @@ private:
     int line_, column_;
     Buffer buffer_;
 
-    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*'};
+    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';'};
     bool is_operator_symbol(int c){
         return static_cast<bool>(operator_symbols.count(c));
-    };
-
-    std::set<int> separator_symbols{'(',')','[',']',':',';'};
-    bool is_separator_symbol(int c){
-        return static_cast<bool>(separator_symbols.count(c));
     };
 
     Token read_relop() {
@@ -123,20 +116,7 @@ private:
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
-            return {line_, column_, token_types::OPERATOR, s};
-        } else{
-            //throw exception
-        }
-    }
-
-    Token read_separator(){
-        std::string s;
-        int c = buffer_.peak();
-        while (is_separator_symbol(c)){
-            c = do_buffer_step(s, c);
-        }
-        if (operators.find(s) != operators.end()){
-            return {line_, column_, token_types::OPERATOR, s};
+            return {line_, column_, token_types::OPERATOR, operators[s], s};
         } else{
             //throw exception
         }
