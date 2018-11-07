@@ -123,7 +123,7 @@ private:
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
-            return {line_, 0, token_types::OPERATOR, s};
+            return {line_, column_, token_types::OPERATOR, s};
         } else{
             //throw exception
         }
@@ -136,7 +136,7 @@ private:
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
-            return {line_, 0, token_types::OPERATOR, s};
+            return {line_, column_, token_types::OPERATOR, s};
         } else{
             //throw exception
         }
