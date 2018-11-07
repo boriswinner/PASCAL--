@@ -45,27 +45,18 @@ struct case_insensitive_string_cmp {
     X(NotEquals, "<>") \
     X(StrictGreater, ">") \
     X(GreaterOrEquals, ">=") \
-
-#define SPECIALSYMBOLS \
     X(Plus, "+") \
     X(Minus, "-") \
-    X(Asterisk, "*") \
-    X(Slash, "/") \
-    X(DoubleAsterisk, "**") \
-    X(At, "@") \
-    X(Caret, "^") \
-    X(ShiftLeft, "<<") \
-    X(ShiftRight, ">>") \
-    X(SymmetricDiff, "><") \
-    X(Colon, ":") \
-    X(Comma, ",") \
-    X(Dot, ".") \
-    X(DoubleDot, "..") \
-    X(Semicolon, ";") \
+    X(Multiply, "*") \
+    X(Divide, "/") \
+
+#define SEPARATORS \
     X(OpenParenthesis, "(") \
     X(CloseParenthesis, ")") \
     X(OpenSquareBracket, "[") \
     X(CloseSquareBracket, "]") \
+    X(Colon, ":") \
+    X(Endofexpr, ";") \
 
 enum token_types: int {
 #define X(name) name,
@@ -87,6 +78,9 @@ enum token_subtypes: int{
 #define X(name, str) name,
     OPERATORS
 #undef X
+#define X(name, str) name,
+    SEPARATORS
+#undef X
 };
 
 char const* token_subtypes_names[]={
@@ -96,6 +90,9 @@ char const* token_subtypes_names[]={
 #undef X
 #define X(name, str) #name,
         OPERATORS
+#undef X
+#define X(name, str) #name,
+        SEPARATORS
 #undef X
 };
 
@@ -108,5 +105,11 @@ static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywor
 static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
 #define X(name, str) {str, name},
         OPERATORS
+#undef X
+};
+
+static std::map<std::string, token_subtypes, case_insensitive_string_cmp> separators{
+#define X(name, str) {str, name},
+        SEPARATORS
 #undef X
 };

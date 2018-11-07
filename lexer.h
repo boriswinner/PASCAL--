@@ -54,11 +54,13 @@ public:
     Token(int line, int column, token_types type, token_subtypes subtype, std::string text) : line_(line), column_(column), type_(type), subtype_(subtype),
                                                                                          text_(std::move(text)) {}
 
-    void print() {
-        std::cout << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(10) << "type" << std::setw(12) << "subtype" << std::setw(15)
+    std::string print() {
+        std::stringstream buffer;
+        buffer << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(13) << "type" << std::setw(12) << "subtype" << std::setw(15)
              << "text" << std::endl;
-        std::cout << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(10) << token_types_names[type_] << std::setw(12)
+        buffer << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(13) << token_types_names[type_] << std::setw(12)
              << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl << std::endl;
+        return buffer.str();
     }
 
     int line_;
@@ -86,10 +88,12 @@ public:
                 continue;
             } else if (isalpha(c)){
                 return read_identificator();
-            } else if ((c == '+') || (c == '-') || isdigit(c) || (c == '%') || (c == '$')){
+            } else if (isdigit(c) || (c == '%') || (c == '$')){
                 return read_number();
-            } else if (c == '>' || c == '<' || c == '='){
+            } else if (is_operator_symbol(c)){
                 return read_relop();
+            } else if (is_separator_symbol(c)){
+                return read_separator();
             } else if (c == std::char_traits<int>::eof()){
                 return {};
             } else if ((c == '\'') || (c == '#')){
@@ -102,15 +106,33 @@ private:
     int line_, column_;
     Buffer buffer_;
 
-    std::set<int> operator_symbols{'>','<','=','!'};
+    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*'};
     bool is_operator_symbol(int c){
         return static_cast<bool>(operator_symbols.count(c));
+    };
+
+    std::set<int> separator_symbols{'(',')','[',']',':',';'};
+    bool is_separator_symbol(int c){
+        return static_cast<bool>(separator_symbols.count(c));
     };
 
     Token read_relop() {
         std::string s;
         int c = buffer_.peak();
         while (is_operator_symbol(c)){
+            c = do_buffer_step(s, c);
+        }
+        if (operators.find(s) != operators.end()){
+            return {line_, 0, token_types::OPERATOR, s};
+        } else{
+            //throw exception
+        }
+    }
+
+    Token read_separator(){
+        std::string s;
+        int c = buffer_.peak();
+        while (is_separator_symbol(c)){
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
@@ -141,7 +163,7 @@ private:
         while(true){
             switch (state){
                 case START:{
-                    if ((c == '+') || (c == '-') || isdigit(c)){
+                    if (isdigit(c)){
                         state = INT;
                     } else if (c == '$'){
                         state = HEX;
@@ -154,9 +176,6 @@ private:
                 }
 
                 case INT:{
-                    if ((c == '+') || (c == '-')){
-                        c = do_buffer_step(s, c);
-                    }
                     while (isdigit(c)){
                         c = do_buffer_step(s, c);
                     }
