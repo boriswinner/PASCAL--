@@ -2,7 +2,7 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 9
+#define NUMBER_OF_TESTS 10
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
@@ -31,9 +31,9 @@ int main(){
         dtl::Diff <char, std::string> d(lexer_out.str(), ssout.str());
         d.compose();
         if (d.getEditDistance() == 0){
-            std::cout << "TEST "+std::to_string(i) <<" PASSED" << std::endl;
+            std::cout << "TEST" << std::setw(4) << std::to_string(i) <<" PASSED" << std::endl;
         } else{
-            std::cout << "TEST "+std::to_string(i) <<" FAILED" << std::endl;
+            std::cout << "TEST" << std::setw(4) << std::to_string(i) <<" FAILED" << std::endl;
         }
 // editDistance
 //        std::cout << "editDistance:" << d.getEditDistance() << std::endl;

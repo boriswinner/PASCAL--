@@ -114,6 +114,13 @@ public:
     }
 };
 
+class UnterminatedStringException : public LexerException {
+public:
+    UnterminatedStringException(int line, int column) : LexerException(line, column) {
+        m_msg = ("LexerError: Unterminated string at line "+std::to_string(line)+" column "+std::to_string(column));
+    }
+};
+
 
 class Lexer {
 public:
@@ -283,8 +290,10 @@ private:
                     c = buffer_.next_char();
                     c = buffer_.peak();
                 }
+            } else if (c == std::char_traits<int>::eof()) {
+                throw UnterminatedStringException(buffer_.line(), buffer_.column());
             } else{
-                c = do_buffer_step(s, c);
+                    c = do_buffer_step(s, c);
             }
         }
     }
