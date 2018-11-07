@@ -8,11 +8,15 @@ int main() {
     Lexer lexer("input.txt");
     std::ofstream out("out.txt");
     while (true){
-        Token t = lexer.get_next();
-        if (t.type_ == token_types::ENDOFFILE){
-            break;
+        try{
+            Token t = lexer.get_next();
+            if (t.type_ == token_types::ENDOFFILE){
+                break;
+            }
+            out << t.print();
+        } catch (IncorrectOperator& e){
+            std::cout << e.what() << std::endl;
         }
-        out << t.print();
     }
 
     return 0;

@@ -1,10 +1,8 @@
-#pragma once
-
 #include <fstream>
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 6
+#define NUMBER_OF_TESTS 8
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
@@ -14,11 +12,15 @@ int main(){
 
         std::stringstream lexer_out;
         while (true){
-            Token t = lexer.get_next();
-            if (t.type_ == token_types::ENDOFFILE){
-                break;
+            try{
+                Token t = lexer.get_next();
+                if (t.type_ == token_types::ENDOFFILE){
+                    break;
+                }
+                lexer_out << t.print();
+            } catch (IncorrectOperator& e){
+                lexer_out << e.what() << std::endl;
             }
-            lexer_out << t.print();
         }
 
         std::ifstream out(filename+".out");

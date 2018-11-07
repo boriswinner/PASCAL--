@@ -9,6 +9,7 @@
 #include <set>
 #include <algorithm>
 #include "token_types.h"
+#include <exception>
 
 
 class Buffer {
@@ -84,6 +85,22 @@ public:
     std::string text_;
 };
 
+class IncorrectOperator : public std::exception
+{
+    std::string m_msg;
+public:
+
+    IncorrectOperator(int line, int column) {
+        m_msg = ("LexerError: Incorrect operator at line "+std::to_string(line)+" column "+std::to_string(column));
+    }
+
+    virtual const char* what() const throw()
+    {
+        return m_msg.c_str();
+    }
+};
+
+
 class Lexer {
 public:
     Lexer(const std::string &filename) : buffer_(filename) {}
@@ -111,7 +128,7 @@ public:
 private:
     Buffer buffer_;
 
-    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';',','};
+    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';',',','.'};
     bool is_operator_symbol(int c){
         return static_cast<bool>(operator_symbols.count(c));
     };
@@ -126,6 +143,7 @@ private:
             return {buffer_.line(), buffer_.column(), token_types::OPERATOR, operators[s], s};
         } else{
             //throw exception
+            throw IncorrectOperator(buffer_.line(),buffer_.column());
         }
     }
 
