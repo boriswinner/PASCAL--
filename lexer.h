@@ -16,20 +16,34 @@ private:
     std::string filename_;
     std::ifstream input_file;
     int c_;
+    int line_, column_;
 public:
-    explicit Buffer(const std::string &filename) : filename_(filename) {
+    explicit Buffer(const std::string &filename) : filename_(filename), line_(1),column_(0) {
         input_file = std::ifstream(filename);
         c_ = input_file.get();
     }
 
     int next_char() {
         int t = c_;
+        column_++;
+        if (t == '\n'){
+            line_++;
+            column_ = 0;
+        }
         c_ = input_file.get();
         return t;
     }
 
     int peak() {
         return c_;
+    }
+
+    int line(){
+        return line_;
+    }
+
+    int column(){
+        return column_;
     }
 
 //    void return_char(char c) {
@@ -72,18 +86,12 @@ public:
 
 class Lexer {
 public:
-    Lexer(const std::string &filename) : buffer_(filename), line_(0), column_(0) {}
+    Lexer(const std::string &filename) : buffer_(filename) {}
 
     Token get_next() {
         while (true){
             int c = buffer_.peak();
-            column_++;
-            if (c == '\n'){
-                line_++;
-                column_ = 0;
-                c = buffer_.next_char();
-                continue;
-            } else if (c == ' '){
+            if ((c == ' ') || c == '\n'){
                 c = buffer_.next_char();
                 continue;
             } else if (isalpha(c)){
@@ -101,7 +109,6 @@ public:
     }
 
 private:
-    int line_, column_;
     Buffer buffer_;
 
     std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';'};
@@ -116,7 +123,7 @@ private:
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
-            return {line_, column_, token_types::OPERATOR, operators[s], s};
+            return {buffer_.line(), buffer_.column(), token_types::OPERATOR, operators[s], s};
         } else{
             //throw exception
         }
@@ -129,9 +136,9 @@ private:
             c = do_buffer_step(s, c);
         }
         if (keywords.find(s) == keywords.end()) {
-            return {line_, column_, token_types::IDENTIFICATOR, s};
+            return {buffer_.line(), buffer_.column(), token_types::IDENTIFICATOR, s};
         } else {
-            return {line_, column_, token_types::KEYWORD, keywords[s], s};
+            return {buffer_.line(), buffer_.column(), token_types::KEYWORD, keywords[s], s};
         }
     }
 
@@ -162,7 +169,7 @@ private:
                     if (c == '.' || c == 'E' || c == 'e'){
                         state = FLOAT;
                     } else{
-                        return {line_,column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
+                        return {buffer_.line(),buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
                     }
                     break;
                 }
@@ -181,9 +188,9 @@ private:
                         while (isdigit(c)){
                             c = do_buffer_step(s, c);
                         }
-                        return {line_,column_,token_types ::NUMBER,token_subtypes::FLOAT, s};
+                        return {buffer_.line(),buffer_.column(),token_types ::NUMBER,token_subtypes::FLOAT, s};
                     } else {
-                        return {line_,column_, token_types ::NUMBER, token_subtypes::FLOAT, s};
+                        return {buffer_.line(),buffer_.column(), token_types ::NUMBER, token_subtypes::FLOAT, s};
                     }
                 }
 
@@ -192,14 +199,14 @@ private:
                     while (isxdigit(c)){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
+                    return {buffer_.line(), buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
                 }
 
                 case BIN:{
                     while ((c == '0' || c == '1')){
                         c = do_buffer_step(s ,c);
                     }
-                    return {line_, column_, token_types ::NUMBER, token_subtypes::INTEGER, s};
+                    return {buffer_.line(), buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
                 }
             }
         }
@@ -228,7 +235,7 @@ private:
                 if (c == '\''){
                     c = do_buffer_step(s, c);
                 } else{
-                    return {line_, column_, token_types::LITERAL, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s};
                 }
             } else if (c == '#'){
                 c = buffer_.next_char();
@@ -236,7 +243,7 @@ private:
                 s.push_back(static_cast<char>(stoi(t.text_)));
                 c = buffer_.peak();
                 if ((c != '\'') && (c != '#')){
-                    return {line_, column_, token_types::LITERAL, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s};
                 } else if (c == '\''){
                     c = buffer_.next_char();
                     c = buffer_.peak();
