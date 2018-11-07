@@ -71,10 +71,8 @@ public:
 
     std::string print() {
         std::stringstream buffer;
-        buffer << std::setw(10) << "line" << std::setw(10) << "column" << std::setw(14) << "type" << std::setw(12) << "subtype" << std::setw(15)
-             << "text" << std::endl;
-        buffer << std::setw(10) << line_ << std::setw(10) << column_ << std::setw(14) << token_types_names[type_] << std::setw(12)
-             << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl << std::endl;
+        buffer << std::setw(5) << line_ << std::setw(8) << column_ << std::setw(14) << token_types_names[type_] << std::setw(12)
+             << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl;
         return buffer.str();
     }
 
@@ -110,7 +108,7 @@ public:
 class IncorrectCharacterException : public LexerException {
 public:
     IncorrectCharacterException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Incorrect character at line "+std::to_string(line)+" column "+std::to_string(column));
+        m_msg = "LexerError: Incorrect character at line "+std::to_string(line)+" column "+std::to_string(column);
     }
 };
 
@@ -142,10 +140,11 @@ public:
             } else if (c == '{'){
                 while (true){
                     c = buffer_.next_char();
+                    if (c == std::char_traits<int>::eof()){
+                        throw UnterminatedCommentException(buffer_.line(),buffer_.column());
+                    }
                     if (c == '}'){
                         break;
-                    } else if (c == std::char_traits<int>::eof()){
-                        throw UnterminatedCommentException(buffer_.line(),buffer_.column());
                     }
                 }
                 continue;
