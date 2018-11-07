@@ -111,7 +111,7 @@ public:
 private:
     Buffer buffer_;
 
-    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';'};
+    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';',','};
     bool is_operator_symbol(int c){
         return static_cast<bool>(operator_symbols.count(c));
     };

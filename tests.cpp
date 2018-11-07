@@ -4,7 +4,7 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 5
+#define NUMBER_OF_TESTS 6
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){

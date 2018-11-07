@@ -55,6 +55,7 @@ struct case_insensitive_string_cmp {
     X(CloseSquareBracket, "]") \
     X(Colon, ":") \
     X(Endofexpr, ";") \
+    X(Comma, ",") \
 
 enum token_types: int {
 #define X(name) name,
