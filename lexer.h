@@ -121,6 +121,13 @@ public:
     }
 };
 
+class UnterminatedCommentException : public LexerException {
+public:
+    UnterminatedCommentException(int line, int column) : LexerException(line, column) {
+        m_msg = ("LexerError: Unterminated comment at line "+std::to_string(line)+" column "+std::to_string(column));
+    }
+};
+
 
 class Lexer {
 public:
@@ -131,6 +138,16 @@ public:
             int c = buffer_.peak();
             if ((c == ' ') || c == '\n'){
                 c = buffer_.next_char();
+                continue;
+            } else if (c == '{'){
+                while (true){
+                    c = buffer_.next_char();
+                    if (c == '}'){
+                        break;
+                    } else if (c == std::char_traits<int>::eof()){
+                        throw UnterminatedCommentException(buffer_.line(),buffer_.column());
+                    }
+                }
                 continue;
             } else if (isalpha(c)){
                 return read_identificator();

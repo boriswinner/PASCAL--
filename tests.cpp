@@ -2,7 +2,7 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 10
+#define NUMBER_OF_TESTS 12
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
