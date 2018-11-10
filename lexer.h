@@ -47,9 +47,21 @@ public:
         return column_;
     }
 
-//    void return_char(char c) {
-//        c_ = c;
-//    }
+    void return_char(char c) {
+        input_file.putback(c_);
+        c_ = c;
+    }
+};
+
+class Token {
+    Token ()
+    int line, column;
+    token_types type;
+    int value;
+};
+
+class TokenStringValue: public Token{
+    std::string value;
 };
 
 class Token {

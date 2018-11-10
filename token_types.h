@@ -8,16 +8,13 @@ struct case_insensitive_string_cmp {
     }
 };
 
-#define TOKENTYPES \
+#define TOKENTYPES_START \
+    X(UNKNOWN) \
     X(ENDOFFILE) \
-    X(KEYWORD) \
     X(IDENTIFICATOR) \
-    X(OPERATOR) \
-    X(NUMBER) \
     X(LITERAL) \
-    X(SPECIALSYMBOL) \
 
-#define KEYWORDS \
+#define TOKENTYPES_KEYWORDS \
     X(IF) \
     X(THEN) \
     X(ELSE) \
@@ -33,7 +30,7 @@ struct case_insensitive_string_cmp {
     X(INTEGER) \
     X(FLOAT) \
 
-#define OPERATORS \
+#define TOKENTYPES_OPERATORS \
     X(Assignment, ":=") \
     X(AssignmentWithPlus, "+=") \
     X(AssignmentWithMinus, "-=") \
@@ -59,45 +56,37 @@ struct case_insensitive_string_cmp {
     X(Dot, ".") \
 
 enum token_types: int {
-#define X(name) name,
-    TOKENTYPES
-#undef X
+    #define X(name) name,
+        TOKENTYPES_START
+    #undef X
+    #define X(name) name,
+        TOKENTYPES_KEYWORDS
+    #undef X
+    #define X(name, str) name,
+        TOKENTYPES_OPERATORS
+    #undef X
 };
 
 char const* token_types_names[]={
     #define X(name) #name,
-        TOKENTYPES
+        TOKENTYPES_START
+    #undef X
+    #define X(name) #name,
+        TOKENTYPES_KEYWORDS
+    #undef X
+    #define X(name, str) #name,
+        TOKENTYPES_OPERATORS
     #undef X
 };
 
-enum token_subtypes: int{
-    UNKNOWN,
-#define X(name) name,
-    KEYWORDS
-#undef X
-#define X(name, str) name,
-    OPERATORS
-#undef X
+static std::map<std::string, token_types, case_insensitive_string_cmp> keywords{
+    #define X(name) {#name, name},
+        TOKENTYPES_KEYWORDS
+    #undef X
 };
 
-char const* token_subtypes_names[]={
-        "UNKNOWN",
-#define X(name) #name,
-        KEYWORDS
-#undef X
-#define X(name, str) #name,
-        OPERATORS
-#undef X
-};
-
-static std::map<std::string, token_subtypes, case_insensitive_string_cmp> keywords{
-#define X(name) {#name, name},
-        KEYWORDS
-#undef X
-};
-
-static std::map<std::string, token_subtypes, case_insensitive_string_cmp> operators{
-#define X(name, str) {str, name},
-        OPERATORS
-#undef X
+static std::map<std::string, token_types, case_insensitive_string_cmp> operators{
+    #define X(name, str) {str, name},
+        TOKENTYPES_OPERATORS
+    #undef X
 };
