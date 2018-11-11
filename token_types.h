@@ -13,6 +13,8 @@ struct case_insensitive_string_cmp {
     X(ENDOFFILE) \
     X(IDENTIFICATOR) \
     X(LITERAL) \
+    X(OPERATOR) \
+    X(KEYWORD) \
 
 #define TOKENTYPES_KEYWORDS \
     X(IF) \

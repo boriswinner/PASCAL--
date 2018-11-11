@@ -1,3 +1,5 @@
+#include <utility>
+
 #pragma once
 #include <utility>
 #include <iostream>
@@ -10,6 +12,7 @@
 #include <algorithm>
 #include "token_types.h"
 #include <exception>
+#include <variant>
 
 
 class Buffer {
@@ -53,46 +56,32 @@ public:
     }
 };
 
-class Token {
-    Token ()
-    int line, column;
-    token_types type;
-    int value;
-};
-
-class TokenStringValue: public Token{
-    std::string value;
-};
+/* print variant type to stream */
+template <typename T0, typename ... Ts>
+std::ostream & operator<< (std::ostream & s,
+                           std::variant<T0, Ts...> const & v)
+{ std::visit([&](auto && arg){ s << arg;}, v); return s; }
 
 class Token {
 public:
-    Token(int line, int column, token_types type, token_subtypes subtype) :
-            line_(line), column_(column), type_(type), subtype_(subtype) {
-        text_ = "";
-    }
+    Token (): type_(token_types::UNKNOWN){}
+    Token (token_types type): type_(type){}
 
-    Token(): type_(ENDOFFILE), subtype_(token_subtypes::UNKNOWN) {}
+    Token(int line, int column, token_types type, std::variant<int,float,std::string> value, std::string text):
+    line_(line), column_(column), type_(type), value_(std::move(value)), text_(std::move(text)){}
 
-    Token(int line, int column, token_types type, std::string text) : line_(line), column_(column), type_(type),
-                                                                 text_(std::move(text)) {
-        subtype_ = token_subtypes::UNKNOWN;
-    }
-
-    Token(int line, int column, token_types type, token_subtypes subtype, std::string text) : line_(line), column_(column), type_(type), subtype_(subtype),
-                                                                                         text_(std::move(text)) {}
-
-    std::string print() {
+    std::string print(){
         std::stringstream buffer;
-        buffer << std::setw(5) << line_ << std::setw(8) << column_ << std::setw(14) << token_types_names[type_] << std::setw(12)
-             << token_subtypes_names[subtype_] << std::setw(15) << text_ << std::endl;
+        buffer << std::setw(5) << line_ << std::setw(8) << column_ << std::setw(14)
+        << token_types_names[type_] << std::setw(15) << value_ << std::setw(15) << text_ << std::endl;
         return buffer.str();
     }
 
-    int line_;
-    int column_;
-    token_types type_;
-    token_subtypes subtype_;
-    std::string text_;
+    int line_  = 0;
+    int column_ = 0;
+    token_types type_ = token_types::UNKNOWN;
+    std::variant<int, float, std::string> value_ = 0;
+    std::string text_ = "";
 };
 
 class LexerException : public std::exception {
@@ -167,7 +156,7 @@ public:
             } else if (is_operator_symbol(c)){
                 return read_relop();
             } else if (c == std::char_traits<int>::eof()){
-                return {};
+                return {token_types ::ENDOFFILE};
             } else if ((c == '\'') || (c == '#')){
                 return read_string();
             } else{
@@ -192,7 +181,8 @@ private:
             c = do_buffer_step(s, c);
         }
         if (operators.find(s) != operators.end()){
-            return {buffer_.line(), buffer_.column(), token_types::OPERATOR, operators[s], s};
+            return {buffer_.line(), buffer_.column(), token_types ::OPERATOR, token_types_names[operators[s]],
+                    s};
         } else{
             //throw exception
             throw IncorrectOperatorException(buffer_.line(), buffer_.column());
@@ -206,9 +196,11 @@ private:
             c = do_buffer_step(s, c);
         }
         if (keywords.find(s) == keywords.end()) {
-            return {buffer_.line(), buffer_.column(), token_types::IDENTIFICATOR, s};
+            std::string s_lower(s);
+            std::transform(s_lower.begin(), s_lower.end(), s_lower.begin(), ::tolower);
+            return {buffer_.line(), buffer_.column(), token_types::IDENTIFICATOR, s_lower, s};
         } else {
-            return {buffer_.line(), buffer_.column(), token_types::KEYWORD, keywords[s], s};
+            return {buffer_.line(), buffer_.column(), token_types::KEYWORD, token_types_names[keywords[s]], s};
         }
     }
 
@@ -239,7 +231,7 @@ private:
                     if (c == '.' || c == 'E' || c == 'e'){
                         state = FLOAT;
                     } else{
-                        return {buffer_.line(),buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
+                        return {buffer_.line(),buffer_.column(), token_types ::INTEGER, std::stoi(s), s};
                     }
                     break;
                 }
@@ -258,9 +250,9 @@ private:
                         while (isdigit(c)){
                             c = do_buffer_step(s, c);
                         }
-                        return {buffer_.line(),buffer_.column(),token_types ::NUMBER,token_subtypes::FLOAT, s};
+                        return {buffer_.line(),buffer_.column(),token_types ::FLOAT, std::stof(s), s};
                     } else {
-                        return {buffer_.line(),buffer_.column(), token_types ::NUMBER, token_subtypes::FLOAT, s};
+                        return {buffer_.line(),buffer_.column(),token_types ::FLOAT, std::stof(s), s};
                     }
                 }
 
@@ -269,14 +261,18 @@ private:
                     while (isxdigit(c)){
                         c = do_buffer_step(s ,c);
                     }
-                    return {buffer_.line(), buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
+                    std::string hex_string = "0x"+s;
+                    hex_string.erase(2,1);
+                    return {buffer_.line(), buffer_.column(), token_types ::INTEGER, int(std::stof(hex_string)), s};
                 }
 
                 case BIN:{
                     while ((c == '0' || c == '1')){
                         c = do_buffer_step(s ,c);
                     }
-                    return {buffer_.line(), buffer_.column(), token_types ::NUMBER, token_subtypes::INTEGER, s};
+                    std::string bin_string(s);
+                    bin_string.erase(0,1);
+                    return {buffer_.line(), buffer_.column(), token_types ::INTEGER, std::stoi(bin_string, nullptr,  2), s};
                 }
             }
         }
@@ -305,7 +301,7 @@ private:
                 if (c == '\''){
                     c = do_buffer_step(s, c);
                 } else{
-                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, s};
                 }
             } else if (c == '#'){
                 c = buffer_.next_char();
@@ -313,7 +309,7 @@ private:
                 s.push_back(static_cast<char>(stoi(t.text_)));
                 c = buffer_.peak();
                 if ((c != '\'') && (c != '#')){
-                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, s};
                 } else if (c == '\''){
                     c = buffer_.next_char();
                     c = buffer_.peak();
