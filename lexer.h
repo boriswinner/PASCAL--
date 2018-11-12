@@ -72,8 +72,7 @@ public:
 
     std::string print(){
         std::stringstream buffer;
-        buffer << std::setw(5) << line_ << std::setw(8) << column_ << std::setw(14)
-        << token_types_names[type_] << std::setw(15) << value_ << std::setw(15) << text_ << std::endl;
+        buffer << std::setw(5) << line_ << std::setw(5) << column_ << std::setw(16) << token_types_names[type_] << std::setw(16) << value_ << std::setw(16) << text_ << std::endl;
         return buffer.str();
     }
 
@@ -286,7 +285,7 @@ private:
     }
 
     Token read_string(){
-        std::string s;
+        std::string s, text;
         int c = buffer_.peak();
         if (c == '\''){
             c = buffer_.next_char();
@@ -299,17 +298,21 @@ private:
                 c = buffer_.next_char();
                 c = buffer_.peak();
                 if (c == '\''){
+                    text.push_back(c);
+                    text.push_back(c);
                     c = do_buffer_step(s, c);
                 } else{
-                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, text};
                 }
             } else if (c == '#'){
+                text.push_back(c);
                 c = buffer_.next_char();
                 Token t = read_number();
                 s.push_back(static_cast<char>(stoi(t.text_)));
+                text.push_back(static_cast<char>(stoi(t.text_)));
                 c = buffer_.peak();
                 if ((c != '\'') && (c != '#')){
-                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, s};
+                    return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, text};
                 } else if (c == '\''){
                     c = buffer_.next_char();
                     c = buffer_.peak();
@@ -317,7 +320,8 @@ private:
             } else if (c == std::char_traits<int>::eof()) {
                 throw UnterminatedStringException(buffer_.line(), buffer_.column());
             } else{
-                    c = do_buffer_step(s, c);
+                text.push_back(c);
+                c = do_buffer_step(s, c);
             }
         }
     }

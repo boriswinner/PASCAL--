@@ -7,7 +7,7 @@ using namespace std;
 int main() {
     Lexer lexer("input.txt");
     std::ofstream out("out.txt");
-    out << std::setw(5) << "line" << std::setw(8) << "column" << std::setw(14) << "type" << std::setw(15) << "value" << std::setw(15)
+    out << std::setw(5) << "line" << std::setw(5) << "col" << std::setw(16) << "type" << std::setw(16) << "value" << std::setw(16)
         << "text" << std::endl;
     while (true){
         try{
