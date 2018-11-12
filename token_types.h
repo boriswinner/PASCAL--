@@ -11,7 +11,7 @@ struct case_insensitive_string_cmp {
 #define TOKENTYPES_START \
     X(UNKNOWN) \
     X(ENDOFFILE) \
-    X(IDENTIFICATOR) \
+    X(IDENTIFIER) \
     X(LITERAL) \
     X(OPERATOR) \
     X(KEYWORD) \
@@ -48,6 +48,9 @@ struct case_insensitive_string_cmp {
     X(Minus, "-") \
     X(Multiply, "*") \
     X(Divide, "/") \
+    X(DoubleAsterisk, "**") \
+    X(At, "@") \
+    X(Caret, "^") \
     X(OpenParenthesis, "(") \
     X(CloseParenthesis, ")") \
     X(OpenSquareBracket, "[") \

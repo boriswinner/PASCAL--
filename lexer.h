@@ -64,15 +64,14 @@ std::ostream & operator<< (std::ostream & s,
 
 class Token {
 public:
-    Token (): type_(token_types::UNKNOWN){}
-    Token (token_types type): type_(type){}
+    Token (int line, int column, token_types type): line_(line), column_(column), type_(type){}
 
     Token(int line, int column, token_types type, std::variant<int,float,std::string> value, std::string text):
     line_(line), column_(column), type_(type), value_(std::move(value)), text_(std::move(text)){}
 
     std::string print(){
         std::stringstream buffer;
-        buffer << std::setw(5) << line_ << std::setw(5) << column_ << std::setw(16) << token_types_names[type_] << std::setw(16) << value_ << std::setw(16) << text_ << std::endl;
+        buffer << std::setw(5) << line_ << std::setw(5) << column_ << std::setw(16) << token_types_names[type_] << std::setw(23) << value_ << std::setw(16) << text_ << std::endl;
         return buffer.str();
     }
 
@@ -126,6 +125,13 @@ public:
     }
 };
 
+class OutOfRangeNumberException : public LexerException {
+public:
+    OutOfRangeNumberException(int line, int column) : LexerException(line, column) {
+        m_msg = ("LexerError: Out of range at line "+std::to_string(line)+" column "+std::to_string(column));
+    }
+};
+
 
 class Lexer {
 public:
@@ -148,14 +154,14 @@ public:
                     }
                 }
                 continue;
-            } else if (isalpha(c)){
-                return read_identificator();
+            } else if (isalpha(c) || c == '_'){
+                return read_identifier();
             } else if (isdigit(c) || (c == '%') || (c == '$')){
                 return read_number();
             } else if (is_operator_symbol(c)){
                 return read_relop();
             } else if (c == std::char_traits<int>::eof()){
-                return {token_types ::ENDOFFILE};
+                return {buffer_.line(), buffer_.column(), token_types ::ENDOFFILE};
             } else if ((c == '\'') || (c == '#')){
                 return read_string();
             } else{
@@ -168,7 +174,7 @@ public:
 private:
     Buffer buffer_;
 
-    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';',',','.'};
+    std::set<int> operator_symbols{'>','<','=','!',':','+','-','/','*',';',',','.','[',']','(',')','@','^','<','>'};
     bool is_operator_symbol(int c){
         return static_cast<bool>(operator_symbols.count(c));
     };
@@ -188,16 +194,16 @@ private:
         }
     }
 
-    Token read_identificator() {
+    Token read_identifier() {
         std::string s;
         int c = buffer_.peak();
-        while (isalpha(c) || isdigit(c)) {
+        while (isalpha(c) || isdigit(c) || c == '_') {
             c = do_buffer_step(s, c);
         }
         if (keywords.find(s) == keywords.end()) {
             std::string s_lower(s);
             std::transform(s_lower.begin(), s_lower.end(), s_lower.begin(), ::tolower);
-            return {buffer_.line(), buffer_.column(), token_types::IDENTIFICATOR, s_lower, s};
+            return {buffer_.line(), buffer_.column(), token_types::IDENTIFIER, s_lower, s};
         } else {
             return {buffer_.line(), buffer_.column(), token_types::KEYWORD, token_types_names[keywords[s]], s};
         }
@@ -230,7 +236,12 @@ private:
                     if (c == '.' || c == 'E' || c == 'e'){
                         state = FLOAT;
                     } else{
-                        return {buffer_.line(),buffer_.column(), token_types ::INTEGER, std::stoi(s), s};
+                        try{
+                            int t = std::stoi(s);
+                            return {buffer_.line(),buffer_.column(), token_types ::INTEGER, t, s};
+                        } catch (const std::out_of_range& oor){
+                            throw OutOfRangeNumberException(buffer_.line(), buffer_.column());
+                        }
                     }
                     break;
                 }
@@ -246,12 +257,14 @@ private:
                     if (c == 'E' || c == 'e'){
                         state = SCALEFACTOR;
                         c = do_buffer_step(s, c);
-                        while (isdigit(c)){
-                            c = do_buffer_step(s, c);
-                        }
-                        return {buffer_.line(),buffer_.column(),token_types ::FLOAT, std::stof(s), s};
+                        continue;
                     } else {
-                        return {buffer_.line(),buffer_.column(),token_types ::FLOAT, std::stof(s), s};
+                        try{
+                            float t = std::stof(s);
+                            return {buffer_.line(),buffer_.column(),token_types ::FLOAT, t, s};
+                        }  catch (const std::out_of_range& oor){
+                            throw OutOfRangeNumberException(buffer_.line(), buffer_.column());
+                        }
                     }
                 }
 
@@ -262,7 +275,12 @@ private:
                     }
                     std::string hex_string = "0x"+s;
                     hex_string.erase(2,1);
-                    return {buffer_.line(), buffer_.column(), token_types ::INTEGER, int(std::stof(hex_string)), s};
+                    try {
+                        int t = int(std::stof(hex_string));
+                        return {buffer_.line(), buffer_.column(), token_types ::INTEGER, t, s};
+                    }  catch (const std::out_of_range& oor){
+                        throw OutOfRangeNumberException(buffer_.line(), buffer_.column());
+                    }
                 }
 
                 case BIN:{
@@ -271,7 +289,28 @@ private:
                     }
                     std::string bin_string(s);
                     bin_string.erase(0,1);
-                    return {buffer_.line(), buffer_.column(), token_types ::INTEGER, std::stoi(bin_string, nullptr,  2), s};
+                    try{
+                        int t = std::stoi(bin_string, nullptr,  2);
+                        return {buffer_.line(), buffer_.column(), token_types ::INTEGER, t, s};
+                    }  catch (const std::out_of_range& oor){
+                        throw OutOfRangeNumberException(buffer_.line(), buffer_.column());
+                    }
+                }
+
+                case SCALEFACTOR:{
+                    c = buffer_.peak();
+                    if (c == '+' || c == '-'){
+                        c = do_buffer_step(s ,c);
+                    }
+                    while(isdigit(c)){
+                        c = do_buffer_step(s, c);
+                    }
+                    try{
+                        float t = std::stof(s);
+                        return {buffer_.line(),buffer_.column(),token_types ::FLOAT, t, s};
+                    }  catch (const std::out_of_range& oor){
+                        throw OutOfRangeNumberException(buffer_.line(), buffer_.column());
+                    }
                 }
             }
         }
@@ -288,6 +327,7 @@ private:
         std::string s, text;
         int c = buffer_.peak();
         if (c == '\''){
+            text.push_back(c);
             c = buffer_.next_char();
             c = buffer_.peak();
         } else{
@@ -295,6 +335,7 @@ private:
         }
         while(true){
             if (c == '\''){
+                text.push_back(c);
                 c = buffer_.next_char();
                 c = buffer_.peak();
                 if (c == '\''){
@@ -309,11 +350,13 @@ private:
                 c = buffer_.next_char();
                 Token t = read_number();
                 s.push_back(static_cast<char>(stoi(t.text_)));
-                text.push_back(static_cast<char>(stoi(t.text_)));
                 c = buffer_.peak();
+                text += t.text_;
                 if ((c != '\'') && (c != '#')){
+                    text.push_back(c);
                     return {buffer_.line(), buffer_.column(), token_types::LITERAL, s, text};
                 } else if (c == '\''){
+                    text.push_back(c);
                     c = buffer_.next_char();
                     c = buffer_.peak();
                 }

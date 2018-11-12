@@ -2,33 +2,39 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 12
+#define NUMBER_OF_TESTS 6
 
 int main(){
-    for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
+    for (int i = 2; i <= NUMBER_OF_TESTS; ++i){
         std::string filename("../tests/test"+std::to_string(i));
 
         Lexer lexer(filename+".in");
 
         std::stringstream lexer_out;
+        lexer_out << std::setw(5) << "line" << std::setw(5) << "col" << std::setw(16) << "type" << std::setw(23) << "value" << std::setw(16)
+            << "text" << std::endl;
         while (true){
             try{
                 Token t = lexer.get_next();
+                lexer_out << t.print();
                 if (t.type_ == token_types::ENDOFFILE){
                     break;
                 }
-                lexer_out << t.print();
             } catch (LexerException & e){
                 lexer_out << e.what() << std::endl;
             } catch(std::exception& e){
-                std::cout << "Unknown exception" << std::endl;;
+                lexer_out << "Unknown exception" << std::endl;;
             }
         }
 
         std::ifstream out(filename+".out");
         std::stringstream ssout;
         ssout << out.rdbuf();
-        dtl::Diff <char, std::string> d(lexer_out.str(), ssout.str());
+        std::string lexer_out_str = lexer_out.str();
+        lexer_out_str.erase(remove_if(lexer_out_str.begin(), lexer_out_str.end(), isspace), lexer_out_str.end());
+        std::string ssout_str = ssout.str();
+        ssout_str.erase(remove_if(ssout_str.begin(), ssout_str.end(), isspace), ssout_str.end());
+        dtl::Diff <char, std::string> d(lexer_out_str, ssout_str);
         d.compose();
         if (d.getEditDistance() == 0){
             std::cout << "TEST" << std::setw(4) << std::to_string(i) <<" PASSED" << std::endl;
