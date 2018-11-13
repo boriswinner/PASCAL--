@@ -1,6 +1,5 @@
-#include <utility>
-
 #pragma once
+#include <utility>
 #include <utility>
 #include <iostream>
 #include <string>
@@ -13,6 +12,7 @@
 #include "token_types.h"
 #include <exception>
 #include <variant>
+#include "exceptions.h"
 
 
 class Buffer {
@@ -71,7 +71,8 @@ public:
 
     std::string print(){
         std::stringstream buffer;
-        buffer << std::setw(5) << line_ << std::setw(5) << column_ << std::setw(16) << token_types_names[type_] << std::setw(23) << value_ << std::setw(16) << text_ << std::endl;
+        buffer << std::setw(5) << line_ << std::setw(5) << column_ << std::setw(16) <<
+                  token_types_names[type_] << std::setw(23) << value_ << std::setw(16) << text_ << std::endl;
         return buffer.str();
     }
 
@@ -80,56 +81,6 @@ public:
     token_types type_ = token_types::UNKNOWN;
     std::variant<int, float, std::string> value_ = 0;
     std::string text_ = "";
-};
-
-class LexerException : public std::exception {
-protected:
-    std::string m_msg;
-public:
-
-    LexerException(int line, int column) {
-        m_msg = ("LexerError at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
-
-    virtual const char* what() const throw()
-    {
-        return m_msg.c_str();
-    }
-};
-
-class IncorrectOperatorException : public LexerException {
-public:
-    IncorrectOperatorException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Incorrect operator at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
-};
-
-class IncorrectCharacterException : public LexerException {
-public:
-    IncorrectCharacterException(int line, int column) : LexerException(line, column) {
-        m_msg = "LexerError: Incorrect character at line "+std::to_string(line)+" column "+std::to_string(column);
-    }
-};
-
-class UnterminatedStringException : public LexerException {
-public:
-    UnterminatedStringException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Unterminated string at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
-};
-
-class UnterminatedCommentException : public LexerException {
-public:
-    UnterminatedCommentException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Unterminated comment at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
-};
-
-class OutOfRangeNumberException : public LexerException {
-public:
-    OutOfRangeNumberException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Out of range at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
 };
 
 
@@ -142,7 +93,6 @@ public:
             int c = buffer_.peak();
             if ((c == ' ') || c == '\n'){
                 c = buffer_.next_char();
-                continue;
             } else if (c == '{'){
                 while (true){
                     c = buffer_.next_char();
@@ -153,7 +103,6 @@ public:
                         break;
                     }
                 }
-                continue;
             } else if (isalpha(c) || c == '_'){
                 return read_identifier();
             } else if (isdigit(c) || (c == '%') || (c == '$')){
@@ -185,13 +134,10 @@ private:
         while (is_operator_symbol(c)){
             c = do_buffer_step(s, c);
         }
-        if (operators.find(s) != operators.end()){
-            return {buffer_.line(), buffer_.column(), token_types ::OPERATOR, token_types_names[operators[s]],
-                    s};
-        } else{
-            //throw exception
+        if (operators.find(s) == operators.end()){
             throw IncorrectOperatorException(buffer_.line(), buffer_.column());
         }
+        return {buffer_.line(), buffer_.column(), token_types ::OPERATOR, token_types_names[operators[s]], s};
     }
 
     Token read_identifier() {

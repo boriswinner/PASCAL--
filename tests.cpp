@@ -5,7 +5,7 @@
 #define NUMBER_OF_TESTS 6
 
 int main(){
-    for (int i = 2; i <= NUMBER_OF_TESTS; ++i){
+    for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
         std::string filename("../tests/test"+std::to_string(i));
 
         Lexer lexer(filename+".in");
