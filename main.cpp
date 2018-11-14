@@ -17,9 +17,9 @@ int main() {
                 break;
             }
         } catch (LexerException &e) {
-            std::cout << e.what() << std::endl;
+            out << e.what() << std::endl;
         } catch (std::exception &e) {
-            std::cout << "Unknown exception" << std::endl;;
+            out << "Unknown exception" << std::endl;;
         }
     }
 
