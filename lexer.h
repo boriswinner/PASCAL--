@@ -276,8 +276,6 @@ private:
             text.push_back(c);
             c = buffer_.next_char();
             c = buffer_.peak();
-        } else{
-            //throw exception
         }
         while(true){
             if (c == '\''){
