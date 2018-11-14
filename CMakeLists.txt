@@ -3,5 +3,5 @@ project(pas__)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(pas__ main.cpp)
+add_executable(pas__ main.cpp lexer.cpp)
 add_executable(tests tests.cpp)

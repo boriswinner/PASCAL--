@@ -1,3 +1,4 @@
+#pragma once
 #include <map>
 #include <string>
 #include "string.h"
@@ -17,6 +18,7 @@ struct case_insensitive_string_cmp {
     X(KEYWORD) \
 
 #define TOKENTYPES_KEYWORDS \
+    X(PROGRAM) \
     X(IF) \
     X(THEN) \
     X(ELSE) \
@@ -72,7 +74,7 @@ enum token_types: int {
     #undef X
 };
 
-char const* token_types_names[]={
+static char const* token_types_names[]={
     #define X(name) #name,
         TOKENTYPES_START
     #undef X

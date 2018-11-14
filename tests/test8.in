@@ -1,4 +1,9 @@
-kjanfaj,
-'aasdsa'
-1488.228;,
-,adaw228
+program z1;
+{this is a sample program}
+var
+    a,b: integer;
+    s: string;
+begin
+    a := 228;
+    s := #60'abc';
+end.
