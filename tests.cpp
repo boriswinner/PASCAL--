@@ -2,7 +2,7 @@
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
-#define NUMBER_OF_TESTS 7
+#define NUMBER_OF_TESTS 8
 
 int main(){
     for (int i = 1; i <= NUMBER_OF_TESTS; ++i){
@@ -17,7 +17,7 @@ int main(){
             try{
                 Token t = lexer.get_next();
                 lexer_out << t.print();
-                if (t.type_ == token_types::ENDOFFILE){
+                if (t.type() == token_types::ENDOFFILE){
                     break;
                 }
             } catch (LexerException & e){
