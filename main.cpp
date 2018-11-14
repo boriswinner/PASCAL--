@@ -13,7 +13,7 @@ int main() {
         try{
             Token t = lexer.get_next();
             out << t.print();
-            if (t.type_ == token_types::ENDOFFILE){
+            if (t.type() == token_types::ENDOFFILE){
                 break;
             }
         } catch (LexerException& e){
