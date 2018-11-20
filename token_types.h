@@ -18,21 +18,40 @@ struct case_insensitive_string_cmp {
     X(KEYWORD) \
 
 #define TOKENTYPES_KEYWORDS \
-    X(PROGRAM) \
-    X(IF) \
-    X(THEN) \
-    X(ELSE) \
     X(AND) \
-    X(OR) \
+    X(ARRAY) \
+    X(ASM) \
     X(BEGIN) \
+    X(BREAK) \
+    X(CASE) \
+    X(CONST) \
+    X(CONTINUE) \
+    X(DIV) \
+    X(DO) \
+    X(DOWNTO) \
+    X(ELSE) \
     X(END) \
+    X(FALSE) \
+    X(FLOAT) \
     X(FOR) \
+    X(FUNCTION) \
+    X(IF) \
+    X(INTEGER) \
+    X(MOD) \
+    X(NIL) \
+    X(NOT) \
+    X(OR) \
+    X(PROCEDURE) \
+    X(PROGRAM) \
+    X(RECORD) \
+    X(REPEAT) \
+    X(STRING) \
+    X(THEN) \
+    X(TO) \
+    X(TRUE) \
+    X(TYPE) \
     X(VAR) \
     X(WHILE) \
-    X(TO) \
-    X(STRING) \
-    X(INTEGER) \
-    X(FLOAT) \
 
 #define TOKENTYPES_OPERATORS \
     X(Assignment, ":=") \
