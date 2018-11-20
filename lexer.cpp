@@ -38,7 +38,7 @@ std::string Token::print() {
 
 Token Lexer::get_next() {
     while (true) {
-        int c = buffer_.peak();
+        int c = buffer_.peek();
         if ((c == ' ') || c == '\n') {
             c = buffer_.next_char();
         } else if (c == '{') {
@@ -67,7 +67,7 @@ Token Lexer::get_next() {
 
 Token Lexer::read_relop() {
     std::string s;
-    int c = buffer_.peak();
+    int c = buffer_.peek();
     while (is_operator_symbol(c)) {
         c = do_buffer_step(s, c);
     }
@@ -79,7 +79,7 @@ Token Lexer::read_relop() {
 
 Token Lexer::read_identifier() {
     std::string s;
-    int c = buffer_.peak();
+    int c = buffer_.peek();
     while (isalpha(c) || isdigit(c) || c == '_') {
         c = do_buffer_step(s, c);
     }
@@ -94,7 +94,7 @@ Token Lexer::read_identifier() {
 
 Token Lexer::read_number() {
     std::string s;
-    int c = buffer_.peak();
+    int c = buffer_.peek();
     int state = 0;
     enum {
         START, INT, FLOAT, BIN, HEX, SCALEFACTOR
@@ -132,7 +132,7 @@ Token Lexer::read_number() {
             }
 
             case FLOAT: {
-                c = buffer_.peak();
+                c = buffer_.peek();
                 if (c == '.') {
                     c = do_buffer_step(s, c);
                 }
@@ -183,7 +183,7 @@ Token Lexer::read_number() {
             }
 
             case SCALEFACTOR: {
-                c = buffer_.peak();
+                c = buffer_.peek();
                 if (c == '+' || c == '-') {
                     c = do_buffer_step(s, c);
                 }
@@ -203,17 +203,17 @@ Token Lexer::read_number() {
 
 Token Lexer::read_string() {
     std::string s, text;
-    int c = buffer_.peak();
+    int c = buffer_.peek();
     if (c == '\'') {
         text.push_back(c);
         c = buffer_.next_char();
-        c = buffer_.peak();
+        c = buffer_.peek();
     }
     while (true) {
         if (c == '\'') {
             text.push_back(c);
             c = buffer_.next_char();
-            c = buffer_.peak();
+            c = buffer_.peek();
             if (c == '\'') {
                 text.push_back(c);
                 text.push_back(c);
@@ -226,7 +226,7 @@ Token Lexer::read_string() {
             c = buffer_.next_char();
             Token t = read_number();
             s.push_back(static_cast<char>(stoi(t.text())));
-            c = buffer_.peak();
+            c = buffer_.peek();
             text += t.text();
             if ((c != '\'') && (c != '#')) {
                 text.push_back(c);
@@ -234,7 +234,7 @@ Token Lexer::read_string() {
             } else if (c == '\'') {
                 text.push_back(c);
                 c = buffer_.next_char();
-                c = buffer_.peak();
+                c = buffer_.peek();
             }
         } else if (c == std::char_traits<int>::eof()) {
             throw UnterminatedStringException(buffer_.line(), buffer_.column());

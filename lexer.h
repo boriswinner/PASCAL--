@@ -21,7 +21,7 @@ public:
 
     int next_char();
 
-    int peak() {
+    int peek() {
         return c_;
     }
 
@@ -89,7 +89,7 @@ private:
     int do_buffer_step(std::string &s, int c) {
         c = buffer_.next_char();
         s.push_back(char(c));
-        c = buffer_.peak();
+        c = buffer_.peek();
         return c;
     }
 
