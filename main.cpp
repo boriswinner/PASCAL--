@@ -1,27 +1,12 @@
 #include <iostream>
-#include "lexer.h"
-
+#include "lexer_executor.h"
 using namespace std;
 
-
 int main() {
-    Lexer lexer("input.txt");
     std::ofstream out("out.txt");
-    out << std::setw(5) << "line" << std::setw(5) << "col" << std::setw(16) << "type" << std::setw(23) << "value" <<
-           std::setw(16) << "text" << std::endl;
-    while (true) {
-        try {
-            Token t = lexer.get_next();
-            out << t.print();
-            if (t.type() == token_types::ENDOFFILE) {
-                break;
-            }
-        } catch (LexerException &e) {
-            out << e.what() << std::endl;
-        } catch (std::exception &e) {
-            out << "Unknown exception" << std::endl;;
-        }
-    }
-
+    std::stringstream ss;
+    test_lexer("input.txt", ss);
+    out << ss.str();
     return 0;
 }
+

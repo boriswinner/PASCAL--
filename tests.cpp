@@ -1,32 +1,15 @@
 #include <fstream>
 #include <sstream>
 #include "extlib/dtl/dtl.hpp"
-#include "lexer.h"
+#include "lexer_executor.h"
 #include "dirent.h"
 #define TESTS_DIRECTORY "../tests/"
 
 void execute_test(const std::string(&filename)) {
     std::string full_filename = (TESTS_DIRECTORY + filename);
-
-    Lexer lexer(full_filename + ".in");
-
     std::stringstream lexer_out;
-    lexer_out << std::setw(5) << "line" << std::setw(5) << "col" << std::setw(16) << "type" << std::setw(23) <<
-              "value" << std::setw(16) << "text" << std::endl;
-    while (true) {
-        try {
-            Token t = lexer.get_next();
-            lexer_out << t.print();
-            if (t.type() == ENDOFFILE) {
-                break;
-            }
-        } catch (LexerException &e) {
-            lexer_out << e.what() << std::endl;
-        } catch (std::exception &e) {
-            lexer_out << "Unknown exception" << std::endl;;
-        }
-    }
 
+    test_lexer(full_filename + ".in", lexer_out);
     std::ifstream out(full_filename + ".out");
     std::stringstream ssout;
     ssout << out.rdbuf();
