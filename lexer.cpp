@@ -1,3 +1,4 @@
+#include <stack>
 #include "lexer.h"
 
 Buffer::Buffer(const std::string &filename) : filename_(filename), line_(1), column_(0) {
@@ -39,15 +40,12 @@ std::string Token::print() {
 Token Lexer::get_next() {
     while (true) {
         int c = buffer_.peek();
+        if (c == '{' || c == '(' || c == '/') {
+            read_comment();
+        }
+        c = buffer_.peek();
         if ((c == ' ') || c == '\n') {
             c = buffer_.next_char();
-        } else if (c == '{') {
-            do {
-                c = buffer_.next_char();
-                if (c == std::char_traits<int>::eof()) {
-                    throw UnterminatedCommentException(buffer_.line(), buffer_.column());
-                }
-            } while (c != '}');
         } else if (isalpha(c) || c == '_') {
             return read_identifier();
         } else if (isdigit(c) || (c == '%') || (c == '$')) {
@@ -241,6 +239,66 @@ Token Lexer::read_string() {
         } else {
             text.push_back(c);
             c = do_buffer_step(s, c);
+        }
+    }
+}
+
+void Lexer::read_comment(){
+    std::stack<char> st;
+
+    while(true){
+        char c = buffer_.next_char();
+        if (c == '{'){
+            st.push(c);
+        } else if (c == '}'){
+            if (st.top() == '{'){
+                st.pop();
+            } else{
+                throw IncorrectCommentException(buffer_.line(), buffer_.column());
+            }
+        } else if (c == '('){
+            c = buffer_.next_char();
+            if (c == '*'){
+                st.push(c);
+            } else{
+                if (st.empty()){
+                    buffer_.return_char(c);
+                    buffer_.return_char('(');
+                    break;
+                }
+                continue;
+            }
+        } else if (c == '*'){
+            c = buffer_.next_char();
+            if (c == ')'){
+                if (st.top() == '*'){
+                    st.pop();
+                } else{
+                    throw IncorrectCommentException(buffer_.line(), buffer_.column());
+                }
+            }
+        } else if (c == '/'){
+            c = buffer_.next_char();
+            if (c == '/'){
+                while (c != '\n' && c != std::char_traits<int>::eof()){
+                    c = buffer_.next_char();
+                }
+            } else{
+                if (st.empty()){
+                    buffer_.return_char(c);
+                    buffer_.return_char('/');
+                    break;
+                }
+                continue;
+            }
+        } else if (c == std::char_traits<int>::eof()){
+            if (!st.empty()){
+                throw UnclosedCommentException(buffer_.line(), buffer_.column());
+            }
+            return;
+        }
+        if (st.empty()){
+            return;
         }
     }
 }

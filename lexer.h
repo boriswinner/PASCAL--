@@ -86,6 +86,8 @@ private:
 
     Token read_number();
 
+    void read_comment();
+
     int do_buffer_step(std::string &s, int c) {
         c = buffer_.next_char();
         s.push_back(char(c));
