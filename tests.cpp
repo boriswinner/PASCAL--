@@ -3,11 +3,9 @@
 #include "extlib/dtl/dtl.hpp"
 #include "lexer.h"
 #include "dirent.h"
-
-#define NUMBER_OF_TESTS 10
 #define TESTS_DIRECTORY "../tests/"
 
-void execute_test(std::string(filename)) {
+void execute_test(const std::string(&filename)) {
     std::string full_filename = (TESTS_DIRECTORY + filename);
 
     Lexer lexer(full_filename + ".in");
@@ -73,11 +71,6 @@ int main() {
         perror("");
         return EXIT_FAILURE;
     }
-
-
-    // editDistance
-//        std::cout << "editDistance:" << d.getEditDistance() << std::endl;
-
 }
 
 
