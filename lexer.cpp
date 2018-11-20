@@ -18,6 +18,7 @@ int Buffer::next_char() {
 }
 
 void Buffer::return_char(char c) {
+    column_--;
     input_file.putback(c_);
     c_ = c;
 }
@@ -257,12 +258,12 @@ void Lexer::read_comment(){
                 throw IncorrectCommentException(buffer_.line(), buffer_.column());
             }
         } else if (c == '('){
-            c = buffer_.next_char();
+            c = buffer_.peek();
             if (c == '*'){
+                c = buffer_.next_char();
                 st.push(c);
             } else{
                 if (st.empty()){
-                    buffer_.return_char(c);
                     buffer_.return_char('(');
                     break;
                 }
@@ -278,14 +279,14 @@ void Lexer::read_comment(){
                 }
             }
         } else if (c == '/'){
-            c = buffer_.next_char();
+            c = buffer_.peek();
             if (c == '/'){
+                c = buffer_.next_char();
                 while (c != '\n' && c != std::char_traits<int>::eof()){
                     c = buffer_.next_char();
                 }
             } else{
                 if (st.empty()){
-                    buffer_.return_char(c);
                     buffer_.return_char('/');
                     break;
                 }
@@ -293,7 +294,7 @@ void Lexer::read_comment(){
             }
         } else if (c == std::char_traits<int>::eof()){
             if (!st.empty()){
-                throw UnclosedCommentException(buffer_.line(), buffer_.column());
+                throw UnterminatedCommentException(buffer_.line(), buffer_.column());
             }
             return;
         }

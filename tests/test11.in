@@ -1,0 +1,12 @@
+{comment}
+{nested { comment } }
+(* another comment *)
+(* nested (* comment *) *)
+{nested (* comment *) }
+(april)
+{multi
+line
+comment}
+//comment
+a / b;
+{ unclosed comment (* *) (*

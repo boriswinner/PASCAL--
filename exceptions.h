@@ -50,13 +50,6 @@ public:
     }
 };
 
-class UnclosedCommentException : public LexerException {
-public:
-    UnclosedCommentException(int line, int column) : LexerException(line, column) {
-        m_msg = ("LexerError: Unclosed comment at line "+std::to_string(line)+" column "+std::to_string(column));
-    }
-};
-
 class IncorrectCommentException : public LexerException {
 public:
     IncorrectCommentException(int line, int column) : LexerException(line, column) {
